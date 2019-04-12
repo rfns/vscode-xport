@@ -1,0 +1,1 @@
+#define SayHello write "Hello!"

@@ -1,0 +1,298 @@
+{
+  "name": "xport",
+  "publisher": "rfns",
+  "displayName": "xport",
+  "description": "An extension that integrates Port features into VScode",
+  "version": "0.5.0",
+  "engines": {
+    "vscode": "^1.31.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "type": "object",
+    "title": "XPort configuration",
+    "configuration": {
+      "type": "object",
+      "title": "XPort configuration",
+      "properties": {
+        "xport.core.enabled": {
+          "type": "boolean",
+          "enum": [true, false],
+          "description": "Enable or disable Caché integration",
+          "default": true,
+          "enumDescriptions": [
+            "Shows the project explorer, listen to events and configures the XPort API.",
+            "Disables the project explorer, remove events and disables the XPort API."
+          ]
+        },
+        "xport.remote.host": {
+          "type": "string",
+          "description": "The host address hosting the XPort API:",
+          "default": "http://localhost:57772"
+        },
+        "xport.remote.namespace": {
+          "type": "string",
+          "description": "The namespace that contains the source code: ",
+          "default": "USER"
+        },
+        "xport.authentication.username": {
+          "type": "string",
+          "description": "The user name that should be used to authenticate. (Note: This user must have %Development function or %Developer role):",
+          "default": "_system"
+        },
+        "xport.authentication.password": {
+          "type": "string",
+          "description": "The user password that should be used to authenticate:",
+          "default": "SYS"
+        },
+        "xport.headers": {
+          "type": "object",
+          "default": {},
+          "description": "Can be used to extend request headers (Note: Do NOT put the Authorization header here as it'll be overwritten by the authentication settings):"
+        },
+        "xport.healthCheck.interval": {
+          "type": "string",
+          "enum": ["Disabled", "60000", "300000", "600000", "900000", "1200000"],
+          "description": "Check if the server is available at each (in ms):",
+          "default": "60000",
+          "enumDescriptions": [
+            "Don't check if the server is available",
+            "One minute",
+            "Five munutes",
+            "Ten minutes",
+            "Fifteen minutes",
+            "Twenty minutes"
+          ]
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "xport.commands.selectProjects",
+        "title": "XPort: Download projects",
+        "when": "false"
+      },
+      {
+        "command": "xport.commands.importDocument",
+        "title": "Import this document",
+        "when": "false"
+      },
+      {
+        "command": "xport.commands.findDocuments",
+        "title": "XPort: Find documents",
+        "when": "false"
+      },
+      {
+        "command": "xport.commands.publishDocument",
+        "title": "Publish this item",
+        "when": "false"
+      },
+      {
+        "command": "xport.commands.publishFolder",
+        "title": "Publish this folder",
+        "when": "false"
+      },
+      {
+        "command": "xport.projectExplorer.downloadItem",
+        "title": "Download this item",
+        "when": "false",
+        "icon": {
+          "light": "media/light/arrow-down.svg",
+          "dark": "media/dark/arrow-down.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.downloadProject",
+        "title": "Download this project",
+        "when": "false",
+        "icon": {
+          "light": "media/light/desktop-download.svg",
+          "dark": "media/dark/desktop-download.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.deleteProject",
+        "title": "Delete this project",
+        "when": "false",
+        "icon": {
+          "light": "media/light/trashcan.svg",
+          "dark": "media/dark/trashcan.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.compileProject",
+        "title": "Compile this project",
+        "when": "false",
+        "icon": {
+          "light": "media/light/zap.svg",
+          "dark": "media/dark/zap.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.removeItem",
+        "title": "Remove this item",
+        "when": "false",
+        "icon": {
+          "light": "media/light/x.svg",
+          "dark": "media/dark/x.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.deleteItem",
+        "title": "Delete this item",
+        "when": "false",
+        "icon": {
+          "light": "media/light/trashcan.svg",
+          "dark": "media/dark/trashcan.svg"
+        }
+      },
+      {
+        "command": "xport.commands.previewDocument",
+        "title": "Preview this item",
+        "when": "false",
+        "icon": {
+          "light": "media/light/search.svg",
+          "dark": "media/dark/search.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.compareDocumentVersions",
+        "title": "Compare this item with the local changes",
+        "when": "false",
+        "icon": {
+          "light": "media/light/diff.svg",
+          "dark": "media/dark/diff.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.refreshItems",
+        "title": "Refresh",
+        "when": "false",
+        "icon": {
+          "light": "media/light/sync.svg",
+          "dark": "media/dark/sync.svg"
+        }
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "xport.commands.selectProjects",
+          "when": "projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.findDocuments",
+          "when": "projectExplorerEnabled"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "xport.commands.publishFolder",
+          "when": "projectExplorerEnabled && explorerResourceIsFolder"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "xport.commands.importDocument",
+          "when": "resourceScheme == xrf && workspaceFolderCount != 0 && !isSystemDocument"
+        },
+        {
+          "command": "xport.commands.publishDocument",
+          "when": "resourceScheme != xrf && workspaceFolderCount != 0 && !isSystemDocument"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "xport.projectExplorer.downloadItem",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.downloadProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.compileProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteItem",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.compareDocumentVersions",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "group": "navigation",
+          "command": "xport.projectExplorer.refreshItems"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "projectExplorer",
+          "name": "Projects",
+          "when": "projectExplorerEnabled"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/chai-as-promised": "^7.1.0",
+    "@types/elegant-spinner": "^1.0.0",
+    "@types/fetch-mock": "^7.2.3",
+    "@types/fs-extra": "^5.0.5",
+    "@types/lodash.debounce": "^4.0.6",
+    "@types/log-update": "^2.0.0",
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^10.12.21",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "fetch-mock": "^7.3.0",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1",
+    "vscode": "^1.1.28"
+  },
+  "dependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/isomorphic-fetch": "0.0.35",
+    "await-to-js": "^2.1.1",
+    "elegant-spinner": "^1.0.1",
+    "fs-extra": "^7.0.1",
+    "isomorphic-fetch": "^2.2.1",
+    "lodash.debounce": "^4.0.8",
+    "log-update": "^2.3.0",
+    "whatwg-fetch": "^3.0.0"
+  }
+}
