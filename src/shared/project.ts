@@ -2,6 +2,7 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 import * as message from './message'
 import { to } from 'await-to-js'
+import { writeFile } from 'fs-extra'
 import { Core } from '../core'
 import { serializeFailures, write, getDocumentEOLChars } from './document'
 import { serializeErrors } from './error'
@@ -13,15 +14,19 @@ export function getProjectName (uri: vscode.Uri): string {
   return uri.authority
 }
 
+async function notifyFatalError (core: Core, name: string, err: Error, header: string): Promise<void> {
+  core.output.display(header, name)
+  core.output.display(`Details: ${err.message}`, name)
+  await message.displayError(core.output, 'Unable to complete the action due to a fatal error.', name)
+}
+
 export async function compileProject (core: Core, item: ProjectExplorerItem, progress: any) {
   progress.report({ message: `Compiling the project ${item.project}` })
 
   const [err, response] = await to(core.api.compile(item.project))
 
   if (err) {
-    core.output.display('A fatal error happened while publishing changes.')
-    core.output.display(`Details: ${err.message}`)
-    await message.displayError(core.output, 'Unable to complete the action due to a fatal error.')
+    notifyFatalError(core, err, name, 'A fatal error happened while compiling the project.')
   }
 
   if (response.log.length > 0) {
@@ -69,9 +74,7 @@ export async function downloadProject (
     apiResponse = r
 
     if (err) {
-      core.output.display('A fatal error happened while publishing changes.')
-      core.output.display(`Details: ${err.message}`)
-      await message.displayError(core.output, 'Unable to complete the action due to a fatal error.')
+      notifyFatalError(core, name, err, 'A fatal error happened downloading the project.')
     } else if (apiResponse) {
       if (apiResponse.has_errors) {
         core.output.display(serializeFailures(apiResponse.failure), name)
@@ -120,9 +123,7 @@ export async function publishProjectItems (
   const [err, response] = await to(core.api.publish(workspaceFolder, items))
 
   if (err) {
-    core.output.display('A fatal error happened while publishing changes.', name)
-    core.output.display(`Details: ${err.message}`, name)
-    await message.displayError(core.output, 'Unable to complete the action due to a fatal error.', name)
+    return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
   } else if (response) {
     progress.report({ message: `XPort: Writing files` })
     const writingResults = await write(response.success)
@@ -161,5 +162,30 @@ export function groupDocumentsByProject (docs: vscode.TextDocument[]): GroupedRe
     }
     return groups
   }, {})
+}
+
+export async function getProjectXML (
+  core: Core,
+  workspaceFolder:
+  vscode.WorkspaceFolder,
+  progress: vscode.Progress<any>
+): Promise<void> {
+  const { name } = workspaceFolder
+
+  progress.report({ message: `XPort: Generating the project XML from ${name}` })
+  let [err, response] = await to(core.api.xml(name))
+
+  if (err || !response || !response.xml) {
+    if (!err) err = new Error('Failed to fetch the content.')
+    return notifyFatalError(core, name, err, 'A error happened while downloading the project XML.')
+  }
+
+  const basingPath = workspaceFolder.uri.fsPath
+  const targetPath = path.resolve(basingPath, `${name}.xml`)
+
+  const [writeErr, ok] = await to(writeFile(targetPath, response.xml))
+  if (writeErr) return notifyFatalError(core, name, writeErr, 'A error happened while writing the XML file.')
+
+  core.output.display(`A XML file has been generated. Path: ${targetPath}`, name)
 }
 

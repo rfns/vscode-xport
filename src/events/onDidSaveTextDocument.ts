@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
 import { MuxerTimeout } from '../shared/muxer'
-import { publishProjectItems, groupDocumentsByProject } from '../shared/project'
+import { publishProjectItems, groupDocumentsByProject, getProjectXML } from '../shared/project'
 
 export const muxer = new MuxerTimeout({
   timeout: 500,
@@ -15,7 +15,7 @@ const input = muxer.input(async (doc: vscode.TextDocument, core: Core) => {
   const { configuration } = core
 
   if (doc.fileName.match(/\.(vscode|code-workspace)/)) return
-  if (!doc.fileName.match(/[\\/]web|cls|inc|mac|int|mvi/)) return
+  if (!doc.fileName.match(/[\\/]web|cls|inc|mac|int|mvi|mvb|bas/)) return
   if (!configuration) throw new Error('Configuration not found.')
 
   return { ...doc, core }
@@ -33,7 +33,14 @@ muxer.output(async (docs: any) => {
     for (let i = 0, l = entries.length; i < l; i++) {
       const { items, workspaceFolder } = entries[i]
       await publishProjectItems(core, workspaceFolder, items, progress)
+
+      if (core.configuration && core.configuration.autoExportXML) {
+        await getProjectXML(core, workspaceFolder, progress)
+      }
+
     }
+
+    core.projectExplorerProvider.refresh()
   })
 })
 

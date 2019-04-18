@@ -8,7 +8,6 @@ import { Core } from './core'
 export function activate(context: vscode.ExtensionContext) {
   const core = new Core()
   core.init()
-
 	context.subscriptions.push(core)
 }
 

@@ -1,8 +1,7 @@
 import * as vscode from 'vscode'
 import * as url from 'url'
-import debounce = require('lodash.debounce')
 import { to } from 'await-to-js'
-import { Core } from '../core'
+import { Core } from '../../core'
 
 export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
   private _onDidChange: vscode.EventEmitter<any> = new vscode.EventEmitter<vscode.Uri>();

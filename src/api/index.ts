@@ -10,15 +10,17 @@ import {
   MixedResponse,
   ProjectList,
   RequestItem,
-  ItemPaths
+  ItemPaths,
+  DocumentReferences,
+  ProjectXML
 } from '../types'
 
 export class API {
   private host: string | undefined
   private namespace: string | undefined
-
   private client: Client | null
   private output: any
+  private compilerOptions: string = 'cku'
 
   constructor (
     options: Configuration | null,
@@ -35,6 +37,7 @@ export class API {
 
     this.host = options.host
     this.namespace = options.namespace || this.namespace
+    this.compilerOptions = options.compilerOptions
 
     if (this.host && this.namespace) {
       this.client = new Client({
@@ -107,7 +110,7 @@ export class API {
     if (!this.client || !this.canMakeRequest(name)) return { has_errors: false, success: [], failure: { header: '', items: [] }}
 
     const resource = `${this.getProjectBaseResource(name)}/items/publish`
-    return this.client.post(resource, { items })
+    return this.client.post(resource, { items, compilerOptions: this.compilerOptions })
   }
 
   async deleteProject (name: string): Promise<boolean> {
@@ -125,11 +128,25 @@ export class API {
     return this.client.get(resource)
   }
 
-  async compile (name: string, qspec: string = ''): Promise<any> {
+  async references (expression: string, max: number, pattern: string): Promise<DocumentReferences> {
+    if (!this.client) return { references: [] }
+
+    const resource = `${this.host}/api/xport/namespaces/${this.namespace}/documents/references?expression=${expression}&pattern=${pattern}&max=${max}`
+    return this.client.get(resource)
+  }
+
+  async compile (name: string): Promise<any> {
     if (!this.client || !this.canMakeRequest(name)) return { error: null, log: [] }
 
-    const resource = `${this.getProjectBaseResource(name)}/actions/compile?qspec=${qspec}`
-    return this.client.post(resource)
+    const resource = `${this.getProjectBaseResource(name)}/compile`
+    return this.client.post(resource, { compilerOptions: this.compilerOptions })
+  }
+
+  async xml (name: string): Promise<ProjectXML> {
+    if (!this.client) return { xml: '' }
+
+    const resource = `${this.getProjectBaseResource(name)}/xml`
+    return this.client.get(resource)
   }
 
   getProjectBaseResource (name: string): string {

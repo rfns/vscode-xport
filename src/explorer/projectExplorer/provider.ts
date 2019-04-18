@@ -2,11 +2,10 @@ import * as vscode from 'vscode'
 import { ProjectExplorerItem } from './item'
 import { Core } from '../../core'
 import { getPathPart, getTypes, getProjects } from './util'
-import { getWorkspaceConfiguration } from '../../shared/workspace'
 
 export class ProjectExplorerProvider implements vscode.TreeDataProvider<ProjectExplorerItem> {
   private core: Core
-  private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<ProjectExplorerItem>();
+  private _onDidChangeTreeData: vscode.EventEmitter<ProjectExplorerItem> = new vscode.EventEmitter<ProjectExplorerItem>();
 	readonly onDidChangeTreeData: vscode.Event<ProjectExplorerItem> = this._onDidChangeTreeData.event
 
   getTreeItem (element: ProjectExplorerItem): vscode.TreeItem {

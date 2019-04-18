@@ -7,6 +7,8 @@ export interface Configuration {
   namespace: string
   enabled: boolean
   healthCheck: string
+  compilerOptions: string
+  autoExportXML: boolean
 }
 
 export interface Authentication {
@@ -79,5 +81,13 @@ export interface ItemPaths {
 
 export interface ContentPreview {
   preview: string[]
+}
+
+export interface DocumentReferences {
+  references: string[]
+}
+
+export interface ProjectXML {
+  xml: string
 }
 

@@ -1,9 +1,9 @@
 import * as vscode from 'vscode'
 import debounce = require('lodash.debounce')
-import { Core } from '../../core'
+import { Core } from '../../../core'
 import { to } from 'await-to-js'
-import { XRFDocumentQuickPickItem } from '../finder'
-import * as message from '../../shared/message'
+import { XRFDocumentQuickPickItem } from '../'
+import * as message from '../../../shared/message'
 
 export function register (
   core: Core,

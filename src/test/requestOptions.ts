@@ -19,7 +19,9 @@ function setupDefaultOptions () {
       disposables: [],
       applicationPath: `csp/${process.env.TEST_NAMESPACE}`,
       enabled: true,
-      healthCheck: 'disabled'
+      healthCheck: 'disabled',
+      compilerOptions: 'cku',
+      autoExportXML: false
     }
   }
   throw new Error('envs TEST_HOST and TEST_NAMESPACE must be defined.')

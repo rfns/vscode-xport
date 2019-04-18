@@ -24,21 +24,21 @@
         "xport.core.enabled": {
           "type": "boolean",
           "enum": [true, false],
-          "description": "Enable or disable Caché integration",
+          "description": "Enable or disable Caché integration:",
           "default": true,
           "enumDescriptions": [
-            "Shows the project explorer, listen to events and configures the XPort API.",
-            "Disables the project explorer, remove events and disables the XPort API."
+            "Displays the project explorer and publish the files whenever they are modified.",
+            "Only listens to configuration changes."
           ]
         },
         "xport.remote.host": {
           "type": "string",
-          "description": "The host address hosting the XPort API:",
+          "description": "The address where the XPort API is hosted:",
           "default": "http://localhost:57772"
         },
         "xport.remote.namespace": {
           "type": "string",
-          "description": "The namespace that contains the source code: ",
+          "description": "The namespace that contains the source code:",
           "default": "USER"
         },
         "xport.authentication.username": {
@@ -54,12 +54,27 @@
         "xport.headers": {
           "type": "object",
           "default": {},
-          "description": "Can be used to extend request headers (Note: Do NOT put the Authorization header here as it'll be overwritten by the authentication settings):"
+          "description": "Additional request headers (Note: Do NOT put the Authorization header here as it'll be overwritten by the authentication settings):"
+        },
+        "xport.compiler.flags": {
+          "type": "string",
+          "default": "cku",
+          "description": "The compiler flags to be used when compiling routines:"
+        },
+        "xport.project.autoExportXML": {
+          "type": "boolean",
+          "default": false,
+          "description": "Configure the condition to generate a project XML (useful for older Caché versions):",
+          "enum": [true, false],
+          "enumDescriptions": [
+            "Whenever a related file is published.",
+            "Don't export the XML at all."
+          ]
         },
         "xport.healthCheck.interval": {
           "type": "string",
           "enum": ["Disabled", "60000", "300000", "600000", "900000", "1200000"],
-          "description": "Check if the server is available at each (in ms):",
+          "description": "The time in milliseconds to ping the server checking if it's online:",
           "default": "60000",
           "enumDescriptions": [
             "Don't check if the server is available",

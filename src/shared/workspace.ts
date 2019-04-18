@@ -43,7 +43,9 @@ export function getWorkspaceConfiguration (): Configuration | null {
     headers: configuration.headers,
     authentication: configuration.authentication,
     enabled: configuration.core.enabled,
-    healthCheck: configuration.healthCheck.interval
+    healthCheck: configuration.healthCheck.interval,
+    compilerOptions: configuration.compiler.flags,
+    autoExportXML: configuration.project.autoExportXML
   }
 }
 

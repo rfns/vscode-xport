@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { XRF_SCHEME } from '../../xrf'
-import { XRFDocumentQuickPickItem } from '../finder'
+import { XRF_SCHEME } from '../../../xrf'
+import { XRFDocumentQuickPickItem } from '../'
 
 export const CACHE_TYPES_REGEX = /(cls|inc|mvi|mvb|mac|int|mac)/
 

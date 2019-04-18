@@ -3,11 +3,11 @@ import * as fs from 'fs-extra'
 import * as path from 'path'
 import * as os from 'os'
 import { to } from 'await-to-js'
-import { ItemDetail, FailureOverview, FailedItem, GroupedRequestItems } from '../types'
+import { ItemDetail, FailureOverview, FailedItem } from '../types'
 import { serializeErrors } from './error'
 
-export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi']
-export const CACHE_FOLDERS = /[\\/]web|cls|inc|mac|int|mvi/
+export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
+export const CACHE_FOLDERS = /[\\/]web|cls|inc|mac|int|mvi|mvb|bas/
 
 async function safeWrite (
   destination: string | undefined,

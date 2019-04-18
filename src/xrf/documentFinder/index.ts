@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import * as events from './events'
-import { Core } from '../core'
+import { Core } from '../../core'
 
 export interface XRFDocumentQuickPickItem extends vscode.QuickPickItem {
   webAppPath?: string

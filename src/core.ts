@@ -8,7 +8,7 @@ import { getWorkspaceConfiguration } from './shared/workspace'
 import { Configuration } from './types'
 import { ProjectExplorerProvider } from './explorer/projectExplorer'
 import { XRFDocumentProvider, XRF_SCHEME } from './xrf'
-import { HealthCheck } from './healthCheck';
+import { HealthCheck } from './healthCheck'
 
 export class Core {
   public readonly api: API
@@ -30,7 +30,6 @@ export class Core {
     this.message = message
 
     events.onDidChangeConfiguration.listen(this)
-    this.registerProviders()
   }
 
   dispose () {
@@ -58,7 +57,7 @@ export class Core {
       this.output.display(`Using namespace ${this.configuration.namespace}.`, 'root')
 
       if (this.configuration.authentication) {
-        this.output.display(`Using the username: ${this.configuration.authentication.username}.`, 'root')
+        this.output.display(`Logging as ${this.configuration.authentication.username}.`, 'root')
       } else {
         this.output.display('Warning: No credentials were provided. The client API will not be able to communicate with the server.', 'root')
       }
@@ -77,6 +76,7 @@ export class Core {
       vscode.commands.executeCommand('setContext', 'projectExplorerEnabled', true)
 
       if (this.disposables.length === 0) {
+        this.registerProviders()
         this.registerListenersAndWatchers()
         this.registerCommands()
       }
@@ -109,8 +109,8 @@ export class Core {
   }
 
   registerProviders () {
-    vscode.window.createTreeView('projectExplorer', { treeDataProvider: this.projectExplorerProvider, showCollapseAll: true })
-    vscode.workspace.registerTextDocumentContentProvider(XRF_SCHEME, this.xrfDocumentProvider)
+    this.disposables.push(vscode.workspace.registerTextDocumentContentProvider(XRF_SCHEME, this.xrfDocumentProvider))
+    this.disposables.push(vscode.window.createTreeView('projectExplorer', { treeDataProvider: this.projectExplorerProvider, showCollapseAll: true }))
   }
 
   disable () {

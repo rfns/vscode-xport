@@ -15,7 +15,8 @@ export function register (core: Core): vscode.Disposable {
       const uris = await expandPaths([uri])
       const documents = await Promise.all(uris.map(async uri => getDocumentFromUri(uri)))
       const groups = groupDocumentsByProject(documents)
-      return publishProjectItems(core, workspaceFolder, groups[workspaceFolder.name].items, progress)
+      await publishProjectItems(core, workspaceFolder, groups[workspaceFolder.name].items, progress)
+      core.projectExplorerProvider.refresh()
     })
   })
 }
