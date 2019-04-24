@@ -21,6 +21,7 @@ export class Core {
   public disposables: vscode.Disposable[]
 
   private _healthCheck?: HealthCheck
+  private _onDidChangeConfiguration: vscode.Disposable = events.onDidChangeConfiguration.listen(this)
 
   constructor () {
     this.api = new API(this.configuration, output)
@@ -28,11 +29,14 @@ export class Core {
 
     this.output = output
     this.message = message
-
-    events.onDidChangeConfiguration.listen(this)
   }
 
   dispose () {
+    this._onDidChangeConfiguration.dispose()
+    this._softDispose()
+  }
+
+  private _softDispose () {
     if (this._healthCheck) {
       this._healthCheck.stopHealthCheck()
       this._healthCheck = undefined
@@ -114,7 +118,7 @@ export class Core {
   }
 
   disable () {
-    this.dispose()
+    this._softDispose()
     vscode.commands.executeCommand('setContext', 'projectExplorerEnabled', false)
   }
 
