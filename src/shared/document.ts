@@ -7,7 +7,7 @@ import { ItemDetail, FailureOverview, FailedItem } from '../types'
 import { serializeErrors } from './error'
 
 export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
-export const CACHE_FOLDERS = /[\\/]web|cls|inc|mac|int|mvi|mvb|bas/
+export const CACHE_FOLDERS = /[\\/]web|cls|inc|mac|int|mvi|mvb|bas[\//]/
 
 async function safeWrite (
   destination: string | undefined,

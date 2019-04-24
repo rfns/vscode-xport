@@ -11,5 +11,7 @@
     "eslint.enable": false,
     "standard.enable": false,
     "objectscript.conn.ns": "DEV",
-    "objectscript.conn.active": true
+    "objectscript.conn.active": true,
+    "xport.core.enabled": false,
+    "objectscript.conn.version": 2
 }

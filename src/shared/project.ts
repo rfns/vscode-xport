@@ -81,10 +81,10 @@ export async function downloadProject (
         await message.displayError(core.output, `Failed to fetch ${apiResponse.success.length} items.`, name)
       }
 
-      progress.report(`XPort: Writing files`)
+      progress.report({ message: `XPort: Writing files` })
 
       writings = await write(apiResponse.success)
-      progress.report('XPort: Standby')
+      progress.report({ message: 'XPort: Standby' })
 
       if (writings.failure.items.length > 0) {
         core.output.display(serializeFailures(writings.errors), name)
@@ -185,7 +185,5 @@ export async function getProjectXML (
 
   const [writeErr, ok] = await to(writeFile(targetPath, response.xml))
   if (writeErr) return notifyFatalError(core, name, writeErr, 'A error happened while writing the XML file.')
-
-  core.output.display(`A XML file has been generated. Path: ${targetPath}`, name)
 }
 

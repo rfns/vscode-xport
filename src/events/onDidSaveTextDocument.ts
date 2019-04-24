@@ -15,7 +15,7 @@ const input = muxer.input(async (doc: vscode.TextDocument, core: Core) => {
   const { configuration } = core
 
   if (doc.fileName.match(/\.(vscode|code-workspace)/)) return
-  if (!doc.fileName.match(/[\\/]web|cls|inc|mac|int|mvi|mvb|bas/)) return
+  if (!doc.fileName.match(/[\\/](?:web|cls|inc|mac|int|mvi|mvb|bas)[\\/]/)) return
   if (!configuration) throw new Error('Configuration not found.')
 
   return { ...doc, core }

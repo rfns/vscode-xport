@@ -96,8 +96,8 @@ export async function getProjects (core: Core) {
       label: 'Failed to load the data. Check your connection settings.',
       collapsibleState: vscode.TreeItemCollapsibleState.None,
       iconPath: {
-        dark: path.resolve(__dirname, '../../../media/dark/alert.svg'),
-        light: path.resolve(__dirname, '../../../media/light/alert.svg')
+        dark: path.resolve(__dirname, 'media/dark/alert.svg'),
+        light: path.resolve(__dirname, 'media/light/alert.svg')
       }
     }]
   }

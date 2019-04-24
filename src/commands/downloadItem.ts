@@ -11,9 +11,9 @@ export function register(core: Core): vscode.Disposable {
     }, async (progress: any) => {
       const response = await synchronizeProject(core, item.project, [item.uri.fsPath], progress)
 
-      if (response && !response.apiResponse.success.length) {
+      if (!response) {
         core.output.display(`Download prevented: a local project is required to use this command.`, item.project)
-        await message.displayError(core.output, `You need to dowload this item's project first.`, item.project)
+        await message.displayError(core.output, `You need to dowload the full project first.`, item.project)
       }
     })
   })
