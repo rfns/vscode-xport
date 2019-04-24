@@ -72,8 +72,9 @@ export class ProjectExplorerItem extends vscode.TreeItem {
         name = 'question.svg'
         break
     }
-    iconPath.dark = path.resolve(__dirname, `../../../media/dark/${name}`)
-    iconPath.light = path.resolve(__dirname, `../../../media/light/${name}`)
+
+    iconPath.dark = path.join(__dirname, `media/dark/${name}`)
+    iconPath.light = path.join(__dirname, `media/light/${name}`)
 
     return iconPath
   }
