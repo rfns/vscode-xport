@@ -15,7 +15,7 @@ function getNormalizedPath (item: XRFDocumentQuickPickItem) {
   path = type
 
   if (type === 'web') {
-    path = item.webAppPath ? item.label.replace(item.webAppPath, type) : item.label
+    path = item.webAppPath ? item.label.replace(item.webAppPath, type).substring(1) : item.label
   } else if (type === 'cls') {
     let classPath = item.label.split('.')
     classPath = classPath.slice(0, classPath.length - 1)

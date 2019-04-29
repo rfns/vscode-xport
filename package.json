@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.6.0",
+  "version": "0.6.2",
   "engines": {
     "vscode": "^1.31.0"
   },

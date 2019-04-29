@@ -7,7 +7,8 @@
 	"configurations": [{
 			"name": "Run Extension",
 			"type": "extensionHost",
-			"request": "launch",
+      "request": "launch",
+      "preLaunchTask": "npm: watch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
@@ -28,7 +29,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/test/**/*.js"
 			],
-      "preLaunchTask": "npm: watch",
+      "preLaunchTask": "npm watch",
       "env": {
         "TEST_WORKSPACE_FOLDER": "${workspaceFolder}",
         "TEST_AUTHENTICATION_USERNAME": "_system",
