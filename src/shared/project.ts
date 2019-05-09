@@ -69,7 +69,7 @@ export async function downloadProject (
 
   if (workspaceFolder) {
     progress.report(`XPort: Downloading items from ${name}`)
-    const [err, r] = await to(core.api.sources({ workspaceFolder, items }))
+    const [err, r] = await to(core.api.sources(workspaceFolder, items))
 
     apiResponse = r
 
@@ -83,7 +83,7 @@ export async function downloadProject (
 
       progress.report({ message: `XPort: Writing files` })
 
-      writings = await write(apiResponse.success)
+      writings = await write(apiResponse.success, workspaceFolder.uri)
       progress.report({ message: 'XPort: Standby' })
 
       if (writings.failure.items.length > 0) {
@@ -126,7 +126,7 @@ export async function publishProjectItems (
     return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
   } else if (response) {
     progress.report({ message: `XPort: Writing files` })
-    const writingResults = await write(response.success)
+    const writingResults = await write(response.success, workspaceFolder.uri)
 
     if (response.has_errors) {
       core.output.display(serializeFailures(response.failure), name)
@@ -183,7 +183,19 @@ export async function getProjectXML (
   const basingPath = workspaceFolder.uri.fsPath
   const targetPath = path.resolve(basingPath, `${name}.xml`)
 
-  const [writeErr, ok] = await to(writeFile(targetPath, response.xml))
+  const [writeErr] = await to(writeFile(targetPath, response.xml))
   if (writeErr) return notifyFatalError(core, name, writeErr, 'A error happened while writing the XML file.')
+}
+
+export async function fixProject (core: Core, name: string, progress: any) {
+  progress.report({ message: `XPort: Fixing irregularities in ${name}`})
+  let [err] = await to(core.api.fixProject(name))
+
+  if (err) {
+    err = new Error('Failed to fetch the content.')
+    return notifyFatalError(core, name, err, 'A error while fixing the project.')
+  } else {
+    core.output.display('Fixed the irregularities without problems.', name)
+  }
 }
 

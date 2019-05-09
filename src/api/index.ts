@@ -6,7 +6,6 @@ import { getWorkspaceConfiguration } from '../shared/workspace'
 import {
   Configuration,
   ContentPreview,
-  SourceRequest,
   MixedResponse,
   ProjectList,
   RequestItem,
@@ -83,19 +82,15 @@ export class API {
     return this.client.get(resource)
   }
 
-  async sources (options: SourceRequest): Promise<MixedResponse> {
-    const { name, uri } = options.workspaceFolder
+  async sources (workspaceFolder: vscode.WorkspaceFolder, items: string[]): Promise<MixedResponse> {
+    const { name } = workspaceFolder
 
     if (!this.client || !this.canMakeRequest(name)) {
       return { success: [], has_errors: false, failure: { header: '', items: [] } }
     }
 
     const resource = `${this.getProjectBaseResource(name)}/items/source`
-
-    return this.client.post(resource, {
-      items: options.items,
-      workspacePath: uri.fsPath
-    })
+    return this.client.post(resource, { items })
   }
 
   async preview (item: string): Promise<ContentPreview> {
@@ -107,7 +102,7 @@ export class API {
 
   async publish (workspaceFolder: vscode.WorkspaceFolder, items: RequestItem[]): Promise<MixedResponse> {
     const { name } = workspaceFolder
-    if (!this.client || !this.canMakeRequest(name)) return { has_errors: false, success: [], failure: { header: '', items: [] }}
+    if (!this.client) return { has_errors: false, success: [], failure: { header: '', items: [] }}
 
     const resource = `${this.getProjectBaseResource(name)}/items/publish`
     return this.client.post(resource, { items, compilerOptions: this.compilerOptions })
@@ -136,7 +131,7 @@ export class API {
   }
 
   async compile (name: string): Promise<any> {
-    if (!this.client || !this.canMakeRequest(name)) return { error: null, log: [] }
+    if (!this.client) return { error: null, log: [] }
 
     const resource = `${this.getProjectBaseResource(name)}/compile`
     return this.client.post(resource, { compilerOptions: this.compilerOptions })
@@ -147,6 +142,13 @@ export class API {
 
     const resource = `${this.getProjectBaseResource(name)}/xml`
     return this.client.get(resource)
+  }
+
+  async fixProject (name: string): Promise<void> {
+    if (!this.client) return
+
+    const resource = `${this.getProjectBaseResource(name)}/fix`
+    this.client.patch(resource)
   }
 
   getProjectBaseResource (name: string): string {

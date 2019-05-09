@@ -16,11 +16,6 @@ export interface Authentication {
   password: string
 }
 
-export interface SourceRequest {
-  items: String[]
-  workspaceFolder: vscode.WorkspaceFolder
-}
-
 export interface RequestItem {
   path: string
   content: string

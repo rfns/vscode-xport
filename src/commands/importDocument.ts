@@ -5,6 +5,9 @@ import { Core } from '../core'
 import { writeFile, mkdirp } from 'fs-extra'
 import { getWorkspaceFolderByName } from '../shared/workspace'
 import * as message from '../shared/message'
+import { configure } from 'vscode/lib/testrunner';
+
+const conf = vscode.workspace.getConfiguration()
 
 export function register(core: Core): vscode.Disposable {
   return vscode.commands.registerCommand('xport.commands.importDocument', async (uri: vscode.Uri) => {
@@ -22,7 +25,8 @@ export function register(core: Core): vscode.Disposable {
       location: vscode.ProgressLocation.Window
     }, async (progress: any) => {
       if (vscode.window.activeTextEditor) {
-        const destination = path.resolve(workspaceFolder.uri.fsPath, `./${uri.fsPath}`)
+        const relative = `./${uri.fsPath}`
+        const destination = path.resolve(workspaceFolder.uri.fsPath, relative)
         const dir = path.dirname(destination)
         const doc = vscode.window.activeTextEditor.document
 
@@ -35,6 +39,8 @@ export function register(core: Core): vscode.Disposable {
           core.output.display('A fatal error happened while publishing changes.')
           core.output.display(`Details: ${err.message}`)
           await message.displayError(core.output, 'Unable to complete the action due to a fatal error.')
+        } else {
+          message.displayInformation('The item has been copied with success.')
         }
       }
     })

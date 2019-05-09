@@ -44,10 +44,7 @@ describe('XPort API', () => {
 
   context(`POST /api/xport/:namespace/projects/:project`, () => {
     it('shoulds return a list of items from the project', async () => {
-      const result = await api.sources({
-        workspaceFolder,
-        items: ['Whatever.Testing.cls']
-      })
+      const result = await api.sources(workspaceFolder, ['Whatever.Testing.cls'])
     })
   })
 

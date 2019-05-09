@@ -15,7 +15,7 @@ const input = muxer.input(async (doc: vscode.TextDocument, core: Core) => {
   const { configuration } = core
 
   if (doc.fileName.match(/\.(vscode|code-workspace)/)) return
-  if (!doc.fileName.match(/[\\/](?:web|cls|inc|mac|int|mvi|mvb|bas)[\\/]/)) return
+  if (!doc.fileName.match(/[\\/](?:public|cls|inc|mac|int|mvi|mvb|bas)[\\/]/)) return
   if (!configuration) throw new Error('Configuration not found.')
 
   return { ...doc, core }
@@ -32,7 +32,12 @@ muxer.output(async (docs: any) => {
 
     for (let i = 0, l = entries.length; i < l; i++) {
       const { items, workspaceFolder } = entries[i]
-      await publishProjectItems(core, workspaceFolder, items, progress)
+      const promise = publishProjectItems(core, workspaceFolder, items, progress)
+      items.map(item => core.documentLocker.lock(item.path, promise))
+
+      await promise
+
+      core.documentLocker.unlockAll()
 
       if (core.configuration && core.configuration.autoExportXML) {
         await getProjectXML(core, workspaceFolder, progress)

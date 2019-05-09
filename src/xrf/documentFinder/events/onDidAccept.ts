@@ -2,20 +2,20 @@ import * as vscode from 'vscode'
 import { XRF_SCHEME } from '../../../xrf'
 import { XRFDocumentQuickPickItem } from '../'
 
-export const CACHE_TYPES_REGEX = /(cls|inc|mvi|mvb|mac|int|mac)/
+export const CACHE_TYPES_REGEX = /(cls|inc|mvi|mvb|mac|int|bas|mac)/
 
 function getNormalizedPath (item: XRFDocumentQuickPickItem) {
   let type = (item && item.label.split('.').pop() || '').toLowerCase()
   let path = ''
 
   if (!type.match(CACHE_TYPES_REGEX)) {
-    if (item.label.startsWith('/')) type = 'web'
+    if (item.label.startsWith('/')) type = 'public'
   }
 
   path = type
 
-  if (type === 'web') {
-    path = item.webAppPath ? item.label.replace(item.webAppPath, type).substring(1) : item.label
+  if (type === 'public') {
+    path = item.label
   } else if (type === 'cls') {
     let classPath = item.label.split('.')
     classPath = classPath.slice(0, classPath.length - 1)

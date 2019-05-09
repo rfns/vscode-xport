@@ -12,6 +12,7 @@ import * as findDocuments from './findDocuments'
 import * as importDocument from './importDocument'
 import * as publishDocument from './publishDocument'
 import * as publishFolder from './publishFolder'
+import * as fixProject from './fixProject'
 
 export {
   selectProjects,
@@ -27,5 +28,6 @@ export {
   findDocuments,
   importDocument,
   publishDocument,
-  publishFolder
+  publishFolder,
+  fixProject
 }

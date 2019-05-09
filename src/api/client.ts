@@ -94,6 +94,11 @@ export class Client {
     return this.setRequestInProgress(url, configuration)
   }
 
+  async patch (url: string): Promise<any> {
+    const configuration = makeRequestHeaders('PATCH', this.headers)
+    return this.setRequestInProgress(url, configuration)
+  }
+
   async head (url: string): Promise<any> {
     const configuration = makeRequestHeaders('HEAD', this.headers)
     const response =  await getFetchResponse(url, configuration)

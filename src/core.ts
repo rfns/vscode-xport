@@ -9,6 +9,7 @@ import { Configuration } from './types'
 import { ProjectExplorerProvider } from './explorer/projectExplorer'
 import { XRFDocumentProvider, XRF_SCHEME } from './xrf'
 import { HealthCheck } from './healthCheck'
+import { DocumentLocker } from './shared/locker'
 
 export class Core {
   public readonly api: API
@@ -16,6 +17,7 @@ export class Core {
   public readonly message: any
   public readonly projectExplorerProvider: ProjectExplorerProvider = new ProjectExplorerProvider(this)
   public readonly xrfDocumentProvider: XRFDocumentProvider = new XRFDocumentProvider(this)
+  public readonly documentLocker = new DocumentLocker()
 
   public configuration: Configuration | null = null
   public disposables: vscode.Disposable[]
@@ -90,6 +92,7 @@ export class Core {
   registerListenersAndWatchers () {
     this.disposables.push(events.onDidSaveTextDocument.listen(this))
     this.disposables.push(events.onDidChangeActiveTextEditor.listen(this))
+    this.disposables.push(events.onWillSaveTextDocument.listen(this))
     this.output.display('Watching for text document changes.', 'root')
   }
 
@@ -108,6 +111,7 @@ export class Core {
     this.disposables.push(commands.importDocument.register(this))
     this.disposables.push(commands.publishDocument.register(this))
     this.disposables.push(commands.publishFolder.register(this))
+    this.disposables.push(commands.fixProject.register(this))
 
     this.output.display('Registered commands.', 'root')
   }

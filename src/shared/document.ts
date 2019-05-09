@@ -9,6 +9,8 @@ import { serializeErrors } from './error'
 export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
 export const CACHE_FOLDERS = /[\\/]web|cls|inc|mac|int|mvi|mvb|bas[\//]/
 
+let LOCKED_DOCUMENTS: string[] = []
+
 async function safeWrite (
   destination: string | undefined,
   content: string[] | undefined
@@ -47,7 +49,7 @@ export function getDestination (
     const type = name.split('.').filter(part => CACHE_ROUTINES.includes(part)).pop()
     return path.resolve(rootPath, `${type}/${name}`)
   } else {
-    return path.resolve(rootPath, `web/${name}`)
+    return path.resolve(rootPath, `public/${name}`)
   }
 }
 
@@ -61,7 +63,8 @@ export async function getDocumentFromUri (uri: vscode.Uri): Promise<vscode.TextD
 }
 
 export async function write (
-  items: ItemDetail[]
+  items: ItemDetail[],
+  workspaceFolderUri: vscode.Uri
 ): Promise<any> {
   let filesWritten: any = [];
   let filesNotWritten: any = [];
@@ -71,7 +74,8 @@ export async function write (
       let isWritten = false
 
       const message = `Failed to write item ${item.name} to the disk. Path: ${item.path}`
-      isWritten = await safeWrite(item.path, item.content)
+      const destination = path.resolve(workspaceFolderUri.fsPath, item.path)
+      isWritten = await safeWrite(destination, item.content)
 
       if (!isWritten) {
         filesNotWritten.push({

@@ -184,6 +184,24 @@
         }
       },
       {
+        "command": "xport.projectExplorer.fixProject",
+        "title": "Fix this project",
+        "when": "false",
+        "icon": {
+          "light": "media/light/tools.svg",
+          "dark": "media/dark/tools.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.removeProject",
+        "title": "Remove this project",
+        "when": "false",
+        "icon": {
+          "light": "media/light/x.svg",
+          "dark": "media/dark/x.svg"
+        }
+      },
+      {
         "command": "xport.commands.previewDocument",
         "title": "Preview this item",
         "when": "false",
@@ -256,6 +274,16 @@
         },
         {
           "command": "xport.projectExplorer.compileProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.removeProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.fixProject",
           "when": "view == projectExplorer && viewItem == project",
           "group": "inline"
         },
