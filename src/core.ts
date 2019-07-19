@@ -97,7 +97,6 @@ export class Core {
   }
 
   registerCommands () {
-    this.disposables.push(commands.selectProjects.register(this))
     this.disposables.push(commands.deleteProject.register(this))
     this.disposables.push(commands.downloadItem.register(this))
     this.disposables.push(commands.downloadProject.register(this))
@@ -112,6 +111,7 @@ export class Core {
     this.disposables.push(commands.publishDocument.register(this))
     this.disposables.push(commands.publishFolder.register(this))
     this.disposables.push(commands.fixProject.register(this))
+    this.disposables.push(commands.previewBinary.register(this))
 
     this.output.display('Registered commands.', 'root')
   }

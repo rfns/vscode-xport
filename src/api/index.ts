@@ -11,7 +11,8 @@ import {
   RequestItem,
   ItemPaths,
   DocumentReferences,
-  ProjectXML
+  ProjectXML,
+  Pagination
 } from '../types'
 
 export class API {
@@ -82,19 +83,38 @@ export class API {
     return this.client.get(resource)
   }
 
-  async sources (workspaceFolder: vscode.WorkspaceFolder, items: string[]): Promise<MixedResponse> {
+  async pickSources (workspaceFolder: vscode.WorkspaceFolder, files: string[]): Promise<MixedResponse> {
     const { name } = workspaceFolder
 
     if (!this.client || !this.canMakeRequest(name)) {
       return { success: [], has_errors: false, failure: { header: '', items: [] } }
     }
 
-    const resource = `${this.getProjectBaseResource(name)}/items/source`
-    return this.client.post(resource, { items })
+    const resource = `${this.getProjectBaseResource(name)}/items/sources/pick`
+    return this.client.post(resource, { files })
+  }
+
+  async listSources (workspaceFolder: vscode.WorkspaceFolder, pagination: Pagination) {
+    const { name } = workspaceFolder
+
+    if (!this.client || !this.canMakeRequest(name)) {
+      return { success: [], has_errors: false, failure: { header: '', items: [] } }
+    }
+
+    const resource = `${this.getProjectBaseResource(name)}/items/sources/list?page=${pagination.page}&size=${pagination.size}`
+    return this.client.get(resource)
+  }
+
+  async count (workspaceFolder: vscode.WorkspaceFolder) {
+    const { name } = workspaceFolder
+    if (!this.client) return 0
+
+    const resource = `${this.getProjectBaseResource(name)}/items/count`
+    return this.client.get(resource)
   }
 
   async preview (item: string): Promise<ContentPreview> {
-    if (!this.client) return { preview: [] }
+    if (!this.client) return { preview: [], binary: false }
 
     const resource = `${this.host}/api/xport/namespaces/${this.namespace}/documents/preview/${item}`
     return this.client.get(resource)
@@ -153,6 +173,10 @@ export class API {
 
   getProjectBaseResource (name: string): string {
     return `${this.host}/api/xport/namespaces/${this.namespace}/projects/${name}`
+  }
+
+  getDocumentsResource () {
+    return `${this.host}/api/xport/namespaces/${this.namespace}/documents`
   }
 
   private canMakeRequest (name?: string): boolean {

@@ -22,6 +22,10 @@ export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
     this._onDidChange.fire(uri)
   }
 
+  _handleBinary (type: string, chunks: string[]) {
+    return `data:${type};base64,${chunks.join('\n')}`
+  }
+
   async provideTextDocumentContent (uri: vscode.Uri) {
     return vscode.window.withProgress({
       location: vscode.ProgressLocation.Window,
@@ -31,9 +35,10 @@ export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
       if (parsedUrl.path) {
         const resource = parsedUrl.path.startsWith('/') ? parsedUrl.path.substring(1) : parsedUrl.path
         const [err, response] = await to(this.core.api.preview(resource))
+        if (!response) return 'Empty response.'
 
-        let document = response && response.preview.join('\n')
         let error = err && err.message
+        let document = response.preview.join('\n')
 
         return document || error
       }

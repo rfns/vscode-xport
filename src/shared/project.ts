@@ -54,6 +54,77 @@ export async function synchronizeProject (core: Core, name: string, items: strin
   return downloadProject(core, name, workspaceParentDir, items, progress)
 }
 
+export async function downloadProjectLazily (
+  core: Core,
+  name: string,
+  pathToSave: string,
+  page: number = 1,
+  size: number = 20
+) {
+  vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    cancellable: true
+  }, async (progress: any) => {
+    progress.report({ messsage: `Preparing to download ${name} ...` })
+
+    const workspaceFolderPath = path.resolve(pathToSave, name)
+    const workspaceFolder = await ensureWorkspaceFolderExists(workspaceFolderPath)
+
+    if (workspaceFolder) {
+      progress.report({ message: 'Counting items ...' })
+      const [err, result] = await to(core.api.count(workspaceFolder))
+      let more = true
+
+      let downloaded = 0
+      let failed = 0
+      let written = 0
+      let last = { index: 1 }
+      let completeRatio = 0
+      let previous = 0
+
+      while (more) {
+        previous = completeRatio
+        completeRatio = Math.floor((100 * last.index) / result.count)
+        const step = completeRatio - previous
+
+        progress.report({
+          increment: step,
+          message: `Downloading sources and writing files (${completeRatio}% complete).`
+        })
+
+        const [err, sourceList] = await to(core.api.listSources(workspaceFolder, { page, size }))
+
+        if (err)  {
+          return notifyFatalError(core, name, err, 'A fatal error happened while downloading the project.')
+        }
+
+        last = sourceList.success[sourceList.success.length - 1]
+        downloaded += sourceList.success.length
+        page += 1
+        more = sourceList.more
+
+        if (sourceList.has_errors) {
+          failed += sourceList.failure.items.length
+          core.output.display(serializeFailures(sourceList.failure), name)
+        }
+
+        const writings = await write(sourceList.success, workspaceFolder.uri)
+        written += writings.success.length
+
+        if (writings.failure.items.length > 0) {
+          core.output.display(serializeFailures(writings.errors), name)
+        }
+      }
+
+      if (failed > 0) {
+        core.message.displayError(core.output, `Failed to download ${failed} items.`, name)
+      }
+
+      core.output.display(`Operation result: ↓ ${downloaded} | ✎ ${written} | ✘ ${failed}.`, name)
+    }
+  })
+}
+
 export async function downloadProject (
   core: Core,
   name: string,
@@ -69,12 +140,12 @@ export async function downloadProject (
 
   if (workspaceFolder) {
     progress.report(`XPort: Downloading items from ${name}`)
-    const [err, r] = await to(core.api.sources(workspaceFolder, items))
+    const [err, r] = await to(core.api.pickSources(workspaceFolder, items))
 
     apiResponse = r
 
     if (err) {
-      notifyFatalError(core, name, err, 'A fatal error happened downloading the project.')
+      notifyFatalError(core, name, err, 'A fatal error happened while downloading the project.')
     } else if (apiResponse) {
       if (apiResponse.has_errors) {
         core.output.display(serializeFailures(apiResponse.failure), name)
@@ -100,51 +171,71 @@ export async function downloadProject (
   }
 }
 
-export async function downloadProjects (
-  core: Core,
-  projects: string[],
-  destination: string,
-  progress: any
-): Promise<void> {
-  for (let i = 0, l = projects.length; i < l; i++) {
-    await downloadProject(core, projects[i], destination, ['*'], progress)
-  }
-}
-
 export async function publishProjectItems (
   core: Core,
   workspaceFolder: vscode.WorkspaceFolder,
   items: RequestItem[],
+  range: number,
   progress: any
 ): Promise<void> {
   const { name } = workspaceFolder
 
-  progress.report({ message: `XPort: Publishing ${items.length } items to ${name}` })
-  const [err, response] = await to(core.api.publish(workspaceFolder, items))
+  range = items.length > range ? range : items.length
 
-  if (err) {
-    return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
-  } else if (response) {
-    progress.report({ message: `XPort: Writing files` })
-    const writingResults = await write(response.success, workspaceFolder.uri)
+  let previousRatio = 0
+  let completeRatio = 0
+  let failed = 0
+  let success = 0
+  let written = 0
+  let limit = 0
+  let offset = 0
 
-    if (response.has_errors) {
-      core.output.display(serializeFailures(response.failure), name)
-      await message.displayError(core.output, `Failed to publish ${response.failure.items.length} items.`, name)
-    }
+  while (limit < items.length) {
+    limit = limit > items.length ? items.length : (limit + range)
+    offset = (limit - range)
 
-    if (writingResults.failure.items.length) {
-      core.output.display(serializeFailures(writingResults.failure), name)
-      await message.displayError(core.output, `Failed to write ${writingResults.failure.items.length} files.`, name)
-      core.xrfDocumentProvider.refresh()
-    }
+    previousRatio = completeRatio
+    completeRatio = Math.floor((100 * limit) / items.length)
 
-    core.output.display(`Operation result: ↑ ${items.length} | ✎ ${writingResults.success.length} | ✘ ${response.failure.items.length}.`, name)
+    const selection = items.slice(offset, limit)
+    const step = completeRatio - previousRatio
 
-    if (response.warning) {
-      message.displayInformation(response.warning, name)
+    progress.report({
+      increment: step,
+      message: `Publishing sources to ${name} (${completeRatio}% complete).`
+    })
+
+    const [err, response] = await to(core.api.publish(workspaceFolder, selection))
+
+    if (err) {
+      return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
+    } else if (response) {
+      if (response.has_errors) {
+        failed += response.failure.items.length
+        core.output.display(serializeFailures(response.failure), name)
+      } else {
+        success += response.success.length
+      }
+
+      if (response.warning) {
+        message.displayInformation(response.warning, name)
+      }
+
+      const writingResults = await write(response.success, workspaceFolder.uri)
+
+      if (writingResults.failure.items.length) {
+        written += writingResults.success.length
+        core.output.display(serializeFailures(writingResults.failure), name)
+      }
     }
   }
+
+  if (failed > 0) {
+    core.message.displayError(core.output, `Failed to publish ${failed} items.`, name)
+  }
+
+  core.output.display(`Operation result: ↑ ${success} | ✎ ${written} | ✘ ${failed}.`, name)
+  core.xrfDocumentProvider.refresh()
 }
 
 export function groupDocumentsByProject (docs: vscode.TextDocument[]): GroupedRequestItems {

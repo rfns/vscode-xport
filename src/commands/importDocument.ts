@@ -5,9 +5,6 @@ import { Core } from '../core'
 import { writeFile, mkdirp } from 'fs-extra'
 import { getWorkspaceFolderByName } from '../shared/workspace'
 import * as message from '../shared/message'
-import { configure } from 'vscode/lib/testrunner';
-
-const conf = vscode.workspace.getConfiguration()
 
 export function register(core: Core): vscode.Disposable {
   return vscode.commands.registerCommand('xport.commands.importDocument', async (uri: vscode.Uri) => {

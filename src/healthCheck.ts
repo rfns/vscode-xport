@@ -1,4 +1,3 @@
-import * as vscode from 'vscode'
 import { to } from 'await-to-js'
 import { Core } from './core'
 import * as output from './shared/output'
@@ -13,7 +12,7 @@ export class HealthCheck {
     if (this._immediate) this.startHealthCheck()
   }
 
-  private _timer: NodeJS.Timeout | null = null
+  private _timer: any
 
   startHealthCheck () {
     this.stopHealthCheck()

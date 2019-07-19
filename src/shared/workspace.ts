@@ -60,10 +60,10 @@ export async function createWorkspaceFolder (
   await to(fs.promises.mkdir(normalizedPath, { recursive: true }))
 
   return new Promise(async resolve => {
-    const index = (vscode.workspace.workspaceFolders || []).length
+    let index = (vscode.workspace.workspaceFolders || []).length
 
     let lastAddedWorkspaceFolderIndex: number
-    let timeoutId: NodeJS.Timeout | null = null
+    let timeoutId: any
 
     const disposable: vscode.Disposable = vscode.workspace.onDidChangeWorkspaceFolders(
       (e: vscode.WorkspaceFoldersChangeEvent) => {
@@ -78,7 +78,7 @@ export async function createWorkspaceFolder (
       }
     )
 
-    vscode.workspace.updateWorkspaceFolders(index, 0, { uri, name })
+    vscode.workspace.updateWorkspaceFolders(index, null, { uri, name })
 
     timeoutId = setTimeout(() => {
       if (!lastAddedWorkspaceFolderIndex) {

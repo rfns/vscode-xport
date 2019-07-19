@@ -7,22 +7,25 @@ import { ItemDetail, FailureOverview, FailedItem } from '../types'
 import { serializeErrors } from './error'
 
 export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
-export const CACHE_FOLDERS = /[\\/]web|cls|inc|mac|int|mvi|mvb|bas[\//]/
-
-let LOCKED_DOCUMENTS: string[] = []
+export const CACHE_FOLDERS = /[\\/]public|cls|inc|mac|int|mvi|mvb|bas[\//]/
 
 async function safeWrite (
-  destination: string | undefined,
-  content: string[] | undefined
+  destination: string,
+  item: ItemDetail,
 ): Promise<boolean> {
   try {
-    if (!destination || !content) return false
-
     // Don't write anyting because we already have the source.
-    if (content.length === 0) return true
+    if (item.content.length === 0) return true
 
     await fs.mkdirp(path.dirname(destination))
-    await fs.writeFile(destination, content.join(os.EOL))
+
+    let data = item.content.join(item.binary ? '' : os.EOL)
+
+    if (!item.binary) {
+      await fs.writeFile(destination, data)
+    } else {
+      await fs.writeFile(destination, new Buffer(data, 'base64'))
+    }
     return true
   } catch (err) {
     return false
@@ -75,7 +78,7 @@ export async function write (
 
       const message = `Failed to write item ${item.name} to the disk. Path: ${item.path}`
       const destination = path.resolve(workspaceFolderUri.fsPath, item.path)
-      isWritten = await safeWrite(destination, item.content)
+      isWritten = await safeWrite(destination, item)
 
       if (!isWritten) {
         filesNotWritten.push({
@@ -111,20 +114,24 @@ export function serializeFailures (overview: FailureOverview) : string {
   return message
 }
 
-export async function expandPaths (roots: vscode.Uri[]): Promise<vscode.Uri[]> {
+export async function expandPaths (roots: vscode.Uri[], progress: any): Promise<vscode.Uri[]> {
   const list = async (p: string) => (await fs.readdir(p)).map(r => vscode.Uri.file(path.resolve(p, r)))
 
   return roots.reduce(async (aggregationPromise: Promise<vscode.Uri[]>, uri: vscode.Uri) => {
     const allUris = await aggregationPromise
     const stat = await fs.stat(uri.fsPath)
+    let filesDiscovered = allUris
 
     if (stat.isDirectory()) {
       const innerPaths = await list(uri.fsPath)
-      const childrenUris = await expandPaths(innerPaths)
-      return [...allUris, ...childrenUris ]
+      const childrenUris = await expandPaths(innerPaths, progress)
+      filesDiscovered = [...filesDiscovered, ...childrenUris ]
+    } else {
+      filesDiscovered = uri.fsPath.match(CACHE_FOLDERS) ? [...allUris, uri] : allUris
     }
 
-    return uri.fsPath.match(CACHE_FOLDERS) ? [...allUris, uri] : allUris
+    progress.report({ message: `Discovering files (${filesDiscovered.length} files found).` })
+    return filesDiscovered
   }, Promise.all([]))
 }
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
-import { getProjectName, downloadProjects } from '../shared/project'
+import { getProjectName, downloadProjectLazily } from '../shared/project'
 import { ProjectExplorerItem } from '../explorer/projectExplorer'
 
 export function register(core: Core): vscode.Disposable {
@@ -8,11 +8,8 @@ export function register(core: Core): vscode.Disposable {
     const projectName = treeItem.uri && getProjectName(treeItem.uri)
     if (!projectName) return
 
-    const providedPath = await vscode.window.showInputBox({ prompt: 'Type the path where the workspace folders should be created' })
-    vscode.window.withProgress({
-      location: vscode.ProgressLocation.Window
-    }, async (progress: any) => {
-      providedPath && (await downloadProjects(core, [projectName], providedPath, progress))
-    })
+    const pathToSave = await vscode.window.showInputBox({ prompt: 'Type the path where the workspace folders should be created' })
+    if (!pathToSave) return
+    return downloadProjectLazily(core, projectName, pathToSave)
   })
 }

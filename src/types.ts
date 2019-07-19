@@ -1,5 +1,10 @@
 import * as vscode from 'vscode'
 
+export const FileTypes = {
+  IMAGE: /\.(jpg|jpeg|gif|png|bmp)$/i,
+  PDF: /\.(pdf)$/i
+}
+
 export interface Configuration {
   host: string
   headers?: object
@@ -41,6 +46,7 @@ export interface ItemDetail {
   last_change: string
   path: string
   file_name: string
+  binary?: boolean
 }
 
 export interface FailedItem {
@@ -75,6 +81,7 @@ export interface ItemPaths {
 }
 
 export interface ContentPreview {
+  binary: boolean
   preview: string[]
 }
 
@@ -84,5 +91,16 @@ export interface DocumentReferences {
 
 export interface ProjectXML {
   xml: string
+}
+
+export interface BinaryResource {
+  project: string
+  path: string
+  name: string
+}
+
+export interface Pagination {
+  page: number
+  size: number
 }
 

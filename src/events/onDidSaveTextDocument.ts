@@ -32,7 +32,7 @@ muxer.output(async (docs: any) => {
 
     for (let i = 0, l = entries.length; i < l; i++) {
       const { items, workspaceFolder } = entries[i]
-      const promise = publishProjectItems(core, workspaceFolder, items, progress)
+      const promise = publishProjectItems(core, workspaceFolder, items, 1, progress)
       items.map(item => core.documentLocker.lock(item.path, promise))
 
       await promise

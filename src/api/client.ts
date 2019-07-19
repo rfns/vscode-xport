@@ -1,5 +1,4 @@
 import 'isomorphic-fetch'
-import { Agent } from 'https'
 import { Authentication } from '../types'
 import to from 'await-to-js'
 
@@ -8,6 +7,8 @@ interface ClientOptions {
   authentication?: Authentication
 }
 
+let cookieJar = ''
+
 function makeRequestHeaders (method: string, headers?: object, body?: object) {
   return {
     method,
@@ -15,6 +16,7 @@ function makeRequestHeaders (method: string, headers?: object, body?: object) {
     credentials: 'same-origin',
     headers: {
       ...headers,
+      cookie: cookieJar,
       'Content-Type': 'application/json; charset=utf-8'
     }
   }
@@ -30,23 +32,22 @@ function checkFalsyOk (status: number, response: any): null | never {
   return response
 }
 
-export function patchAgentWhenSSL (url: string, data: any) {
-  if (url.match(/^https:\/\//)) {
-    data.agent = new Agent({
-      rejectUnauthorized: false
-    })
-  }
-}
-
 export async function fetchJSON (url: string, data?: any): Promise<any> {
-  const response = await getFetchResponse(url, data)
-  const json = await response.json()
+  const response = await handleSession(url, data)
+  let json = await response.json()
+
   return checkFalsyOk(response.status, json)
 }
 
-export async function getFetchResponse (url: string, data?: any): Promise<Response> {
-  patchAgentWhenSSL(url, data)
-  return fetch(url, data)
+export async function handleSession (url: string, data?: any): Promise<Response> {
+  const response = await fetch(url, data)
+  const setCookie = response.headers.get('set-cookie')
+
+  if (setCookie) {
+    cookieJar = setCookie
+  }
+
+  return response
 }
 
 function createAuthorizationHeader (authentication: Authentication) {
@@ -101,7 +102,7 @@ export class Client {
 
   async head (url: string): Promise<any> {
     const configuration = makeRequestHeaders('HEAD', this.headers)
-    const response =  await getFetchResponse(url, configuration)
+    const response = await handleSession(url, configuration)
     checkFalsyOk(response.status, new Error('Server is not available.'))
   }
 

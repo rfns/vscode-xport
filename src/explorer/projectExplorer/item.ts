@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { XRF_SCHEME } from '../../xrf'
+import { FileTypes } from '../../types'
 
 export class ProjectExplorerItem extends vscode.TreeItem {
   public readonly project: string
@@ -11,6 +12,7 @@ export class ProjectExplorerItem extends vscode.TreeItem {
   public readonly depth: number = 1
   public readonly contextValue: any
   public readonly uri: vscode.Uri
+  public readonly binary: boolean = false
 
   constructor (
     root: string,
@@ -21,7 +23,8 @@ export class ProjectExplorerItem extends vscode.TreeItem {
     items: any,
     fullPath: string,
     depth: number = 0,
-    command?: vscode.Command
+    command?: vscode.Command,
+    binary?: boolean
   ) {
     super(label, collapsibleState)
     this.project = root
@@ -60,13 +63,20 @@ export class ProjectExplorerItem extends vscode.TreeItem {
         name = 'file-directory.svg'
         break
       case 'file':
-        name = 'file.svg'
+        if (!this.label) { name = 'file.svg' }
+        else if (this.label.toLowerCase().match(FileTypes.IMAGE)) { name = 'file-media.svg' }
+        else if (this.label.toLowerCase().match(FileTypes.PDF)) { name = 'file-pdf.svg' }
+        else if (this.binary) { name = 'file-binary.svg' }
+        else { name = 'file.svg' }
         break
       case 'project':
         name = 'file-submodule.svg'
         break
       case 'type':
         name = 'grabber.svg'
+        break
+      case 'image':
+        name = 'file-media.svg'
         break
       default:
         name = 'question.svg'

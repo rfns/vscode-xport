@@ -3,10 +3,11 @@ import * as vscode from 'vscode'
 import { ProjectExplorerItem } from './item'
 import { Core } from '../../core'
 
-export function getTypes (element: ProjectExplorerItem, paths: string[]): any {
-  const types = paths.reduce((types: any, p) => {
-    const type: any = p.split('/')[0]
-    if (!types[type]) types[type] = { fullPath: `${type}`, type }
+export function getTypes (element: ProjectExplorerItem, items: string[]): any {
+  const types: any = items.reduce((types: any, item: any) => {
+    const type: string = item.path.split('/')[0]
+    const binary: boolean = item.binary
+    if (!types[type]) types[type] = { fullPath: `${type}`, type, binary }
     return types
   }, {})
 
@@ -17,7 +18,7 @@ export function getTypes (element: ProjectExplorerItem, paths: string[]): any {
       vscode.TreeItemCollapsibleState.Collapsed,
       'type',
       entry.type,
-      paths,
+      items,
       entry.fullPath,
       element.depth + 1
     )
@@ -26,9 +27,9 @@ export function getTypes (element: ProjectExplorerItem, paths: string[]): any {
 
 export function getPathPart (element: ProjectExplorerItem) {
   return element.items
-    .filter((item: string) => item.includes(element.fullPath))
-    .reduce((elements: ProjectExplorerItem[], item: string) => {
-      let labels: string[] = item.split('/')
+    .filter((item: any) => item.path.includes(element.fullPath))
+    .reduce((elements: ProjectExplorerItem[], item: any) => {
+      let labels: string[] = item.path.split('/')
       let itemCommand: vscode.Command | undefined = undefined
 
       // Excludes entries where the item's name contains the element.fullPath.
@@ -51,10 +52,19 @@ export function getPathPart (element: ProjectExplorerItem) {
       if (lastLabel === label) {
         location = 'file'
         state = vscode.TreeItemCollapsibleState.None
-        itemCommand = {
-          command: 'xport.commands.previewDocument',
-          title: 'Preview this item',
-          arguments: [vscode.Uri.file(fullPath).with({ scheme: 'xrf' })]
+
+        if (item.binary) {
+          itemCommand = {
+            command: 'xport.commands.previewBinary',
+            title: 'Preview this binary',
+            arguments: [{ path: item.path, name: item.name }]
+          }
+        } else {
+          itemCommand = {
+            command: 'xport.commands.previewDocument',
+            title: 'Preview this item',
+            arguments: [vscode.Uri.file(fullPath).with({ scheme: 'xrf' })]
+          }
         }
       }
 
@@ -69,7 +79,8 @@ export function getPathPart (element: ProjectExplorerItem) {
             element.items,
             fullPath,
             element.depth + 1,
-            itemCommand
+            itemCommand,
+            item.binary
           )
       ]
     }, [])

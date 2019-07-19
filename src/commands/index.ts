@@ -1,4 +1,3 @@
-import * as selectProjects from './selectProjects'
 import * as removeItem from './removeItem'
 import * as deleteItem from './deleteItem'
 import * as downloadItem from './downloadItem'
@@ -13,9 +12,9 @@ import * as importDocument from './importDocument'
 import * as publishDocument from './publishDocument'
 import * as publishFolder from './publishFolder'
 import * as fixProject from './fixProject'
+import * as previewBinary from './previewBinary'
 
 export {
-  selectProjects,
   deleteProject,
   removeItem,
   deleteItem,
@@ -29,5 +28,6 @@ export {
   importDocument,
   publishDocument,
   publishFolder,
-  fixProject
+  fixProject,
+  previewBinary
 }

@@ -17,7 +17,7 @@ export function register (core: Core): vscode.Disposable {
       }, async (progress: any) => {
         const { [workspaceFolder.name]: { items } } = groupDocumentsByProject([doc])
 
-        await publishProjectItems(core, workspaceFolder, items, progress)
+        await publishProjectItems(core, workspaceFolder, items, 1, progress)
         core.projectExplorerProvider.refresh()
       })
     }
