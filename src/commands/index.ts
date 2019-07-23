@@ -11,6 +11,7 @@ import * as findDocuments from './findDocuments'
 import * as importDocument from './importDocument'
 import * as publishDocument from './publishDocument'
 import * as publishFolder from './publishFolder'
+import * as publishWorkspaceFolder from './publishWorkspaceFolder'
 import * as repairProject from './repairProject'
 import * as previewBinary from './previewBinary'
 
@@ -28,6 +29,7 @@ export {
   importDocument,
   publishDocument,
   publishFolder,
+  publishWorkspaceFolder,
   repairProject,
   previewBinary
 }

@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.8.2",
+  "version": "0.9.0",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -106,28 +106,27 @@
     "commands": [
       {
         "command": "xport.commands.importDocument",
-        "title": "Import this document",
-        "when": "unavailable"
+        "title": "Import this document"
       },
       {
         "command": "xport.commands.findDocuments",
-        "title": "XPort: Find documents",
-        "when": "unavailable"
+        "title": "XPort: Find documents"
+      },
+      {
+        "command": "xport.commands.publishWorkspaceFolder",
+        "title": "XPort: Publish workspace folder"
       },
       {
         "command": "xport.commands.publishDocument",
-        "title": "XPort: Publish this item to the server",
-        "when": "unavailable"
+        "title": "XPort: Publish this item to the server"
       },
       {
         "command": "xport.commands.publishFolder",
-        "title": "XPort: Publish this folder to the server",
-        "when": "unavailable"
+        "title": "XPort: Publish this folder to the server"
       },
       {
         "command": "xport.projectExplorer.downloadItem",
         "title": "XPort: Download this item from the server",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/arrow-down.svg",
           "dark": "media/dark/arrow-down.svg"
@@ -136,7 +135,6 @@
       {
         "command": "xport.projectExplorer.downloadProject",
         "title": "XPort: Download this project from the server",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/desktop-download.svg",
           "dark": "media/dark/desktop-download.svg"
@@ -145,7 +143,6 @@
       {
         "command": "xport.projectExplorer.deleteProject",
         "title": "XPort: Delete this project from the server",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/trashcan.svg",
           "dark": "media/dark/trashcan.svg"
@@ -154,7 +151,6 @@
       {
         "command": "xport.projectExplorer.compileProject",
         "title": "XPort: Compile this project",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/zap.svg",
           "dark": "media/dark/zap.svg"
@@ -163,7 +159,6 @@
       {
         "command": "xport.projectExplorer.removeItem",
         "title": "XPort: Remove this item from this project",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/x.svg",
           "dark": "media/dark/x.svg"
@@ -172,7 +167,6 @@
       {
         "command": "xport.projectExplorer.deleteItem",
         "title": "XPort: Delete this item from this project and server",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/trashcan.svg",
           "dark": "media/dark/trashcan.svg"
@@ -181,7 +175,6 @@
       {
         "command": "xport.projectExplorer.repairProject",
         "title": "XPort: Repair this project",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/tools.svg",
           "dark": "media/dark/tools.svg"
@@ -190,7 +183,6 @@
       {
         "command": "xport.projectExplorer.removeProject",
         "title": "XPort: Remove this project from the server",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/x.svg",
           "dark": "media/dark/x.svg"
@@ -199,7 +191,6 @@
       {
         "command": "xport.commands.previewDocument",
         "title": "XPort: Preview this item (plain text)",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/search.svg",
           "dark": "media/dark/search.svg"
@@ -208,7 +199,6 @@
       {
         "command": "xport.commands.previewBinary",
         "title": "XPort: Preview this item (binary)",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/search.svg",
           "dark": "media/dark/search.svg"
@@ -217,7 +207,6 @@
       {
         "command": "xport.projectExplorer.compareDocumentVersions",
         "title": "XPort: Compare this local source with the server's version",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/diff.svg",
           "dark": "media/dark/diff.svg"
@@ -226,7 +215,6 @@
       {
         "command": "xport.projectExplorer.refreshItems",
         "title": "XPort: Refresh the project list",
-        "when": "unavailable",
         "icon": {
           "light": "media/light/sync.svg",
           "dark": "media/dark/sync.svg"
@@ -238,6 +226,70 @@
         {
           "command": "xport.commands.findDocuments",
           "when": "projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.publishWorkspaceFolder",
+          "when": "projectExplorerEnabled && workspaceFolderCount != 0"
+        },
+        {
+          "command": "xport.commands.importDocument",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.publishDocument",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.publishFolder",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.downloadItem",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.downloadProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.compileProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.deleteItem",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.repairProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.removeProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.previewDocument",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.previewBinary",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.compareDocumentVersions",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.refreshItems",
+          "when": "false"
         }
       ],
       "explorer/context": [
