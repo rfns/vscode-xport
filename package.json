@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.8.0",
+  "version": "0.8.1",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -107,27 +107,27 @@
       {
         "command": "xport.commands.importDocument",
         "title": "Import this document",
-        "when": "false"
+        "when": "unavailable"
       },
       {
         "command": "xport.commands.findDocuments",
         "title": "XPort: Find documents",
-        "when": "false"
+        "when": "unavailable"
       },
       {
         "command": "xport.commands.publishDocument",
         "title": "XPort: Publish this item to the server",
-        "when": "false"
+        "when": "unavailable"
       },
       {
         "command": "xport.commands.publishFolder",
         "title": "XPort: Publish this folder to the server",
-        "when": "false"
+        "when": "unavailable"
       },
       {
         "command": "xport.projectExplorer.downloadItem",
         "title": "XPort: Download this item from the server",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/arrow-down.svg",
           "dark": "media/dark/arrow-down.svg"
@@ -136,7 +136,7 @@
       {
         "command": "xport.projectExplorer.downloadProject",
         "title": "XPort: Download this project from the server",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/desktop-download.svg",
           "dark": "media/dark/desktop-download.svg"
@@ -145,7 +145,7 @@
       {
         "command": "xport.projectExplorer.deleteProject",
         "title": "XPort: Delete this project from the server",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/trashcan.svg",
           "dark": "media/dark/trashcan.svg"
@@ -154,7 +154,7 @@
       {
         "command": "xport.projectExplorer.compileProject",
         "title": "XPort: Compile this project",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/zap.svg",
           "dark": "media/dark/zap.svg"
@@ -163,7 +163,7 @@
       {
         "command": "xport.projectExplorer.removeItem",
         "title": "XPort: Remove this item from this project",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/x.svg",
           "dark": "media/dark/x.svg"
@@ -172,16 +172,16 @@
       {
         "command": "xport.projectExplorer.deleteItem",
         "title": "XPort: Delete this item from this project and server",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/trashcan.svg",
           "dark": "media/dark/trashcan.svg"
         }
       },
       {
-        "command": "xport.projectExplorer.fixProject",
+        "command": "xport.projectExplorer.repairProject",
         "title": "XPort: Repair this project",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/tools.svg",
           "dark": "media/dark/tools.svg"
@@ -190,7 +190,7 @@
       {
         "command": "xport.projectExplorer.removeProject",
         "title": "XPort: Remove this project from the server",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/x.svg",
           "dark": "media/dark/x.svg"
@@ -199,7 +199,7 @@
       {
         "command": "xport.commands.previewDocument",
         "title": "XPort: Preview this item (plain text)",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/search.svg",
           "dark": "media/dark/search.svg"
@@ -208,7 +208,7 @@
       {
         "command": "xport.commands.previewBinary",
         "title": "XPort: Preview this item (binary)",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/search.svg",
           "dark": "media/dark/search.svg"
@@ -217,7 +217,7 @@
       {
         "command": "xport.projectExplorer.compareDocumentVersions",
         "title": "XPort: Compare this local source with the server's version",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/diff.svg",
           "dark": "media/dark/diff.svg"
@@ -226,7 +226,7 @@
       {
         "command": "xport.projectExplorer.refreshItems",
         "title": "XPort: Refresh the project list",
-        "when": "false",
+        "when": "unavailable",
         "icon": {
           "light": "media/light/sync.svg",
           "dark": "media/dark/sync.svg"
@@ -283,7 +283,7 @@
           "group": "inline"
         },
         {
-          "command": "xport.projectExplorer.fixProject",
+          "command": "xport.projectExplorer.repairProject",
           "when": "view == projectExplorer && viewItem == project",
           "group": "inline"
         },
@@ -354,6 +354,7 @@
     "await-to-js": "^2.1.1",
     "elegant-spinner": "^1.0.1",
     "fs-extra": "^7.0.1",
+    "isbinaryfile": "^4.0.2",
     "isomorphic-fetch": "^2.2.1",
     "lodash.debounce": "^4.0.8",
     "log-update": "^2.3.0",

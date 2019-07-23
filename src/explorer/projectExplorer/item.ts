@@ -75,9 +75,6 @@ export class ProjectExplorerItem extends vscode.TreeItem {
       case 'type':
         name = 'grabber.svg'
         break
-      case 'image':
-        name = 'file-media.svg'
-        break
       default:
         name = 'question.svg'
         break

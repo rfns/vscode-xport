@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { expandPaths } from '../shared/document'
 import { groupDocumentsByProject, publishProjectItems } from '../shared/project'
-import { getDocumentFromUri } from '../shared/document'
+import { getDocumentText } from '../shared/document'
 import { Core } from '../core'
 
 export function register (core: Core): vscode.Disposable {
@@ -12,16 +12,16 @@ export function register (core: Core): vscode.Disposable {
     vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       cancellable: true
-    }, async (progress: any) => {
+    }, async (progress: any, token: vscode.CancellationToken) => {
       progress.report({ message: 'Discovering files (0 files found).' })
 
       const uris = await expandPaths([uri], progress)
-      const documents = await Promise.all(uris.map(async uri => getDocumentFromUri(uri)))
+      const documents = await Promise.all(uris.map(async uri => getDocumentText(uri)))
 
       progress.report({ mesage: 'Grouping by project ...' })
-      const groups = groupDocumentsByProject(documents)
+      const groups = await groupDocumentsByProject(documents)
 
-      await publishProjectItems(core, workspaceFolder, groups[workspaceFolder.name].items, 5, progress)
+      await publishProjectItems(core, workspaceFolder, groups[workspaceFolder.name].items, 5, progress, token)
     })
   })
 }

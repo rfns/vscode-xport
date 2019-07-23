@@ -110,7 +110,7 @@ export class Core {
     this.disposables.push(commands.importDocument.register(this))
     this.disposables.push(commands.publishDocument.register(this))
     this.disposables.push(commands.publishFolder.register(this))
-    this.disposables.push(commands.fixProject.register(this))
+    this.disposables.push(commands.repairProject.register(this))
     this.disposables.push(commands.previewBinary.register(this))
 
     this.output.display('Registered commands.', 'root')

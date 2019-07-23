@@ -104,3 +104,9 @@ export interface Pagination {
   size: number
 }
 
+export interface SimplifiedDocument {
+  uri: vscode.Uri
+  file?: Buffer
+  getText(): string
+}
+

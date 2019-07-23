@@ -164,10 +164,10 @@ export class API {
     return this.client.get(resource)
   }
 
-  async fixProject (name: string): Promise<void> {
+  async repairProject (name: string): Promise<void> {
     if (!this.client) return
 
-    const resource = `${this.getProjectBaseResource(name)}/fix`
+    const resource = `${this.getProjectBaseResource(name)}/repair`
     this.client.patch(resource)
   }
 

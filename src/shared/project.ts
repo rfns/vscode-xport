@@ -3,12 +3,14 @@ import * as vscode from 'vscode'
 import * as message from './message'
 import { to } from 'await-to-js'
 import { writeFile } from 'fs-extra'
+import { isBinaryFile } from 'isbinaryfile'
+
 import { Core } from '../core'
 import { serializeFailures, write, getDocumentEOLChars } from './document'
 import { serializeErrors } from './error'
 import { ensureWorkspaceFolderExists, getWorkspaceFolderByName } from './workspace'
 import { ProjectExplorerItem } from '../explorer/projectExplorer'
-import { MixedResponse, RequestItem, GroupedRequestItems } from '../types'
+import { MixedResponse, RequestItem, GroupedRequestItems, SimplifiedDocument } from '../types'
 
 export function getProjectName (uri: vscode.Uri): string {
   return uri.authority
@@ -41,8 +43,14 @@ export async function compileProject (core: Core, item: ProjectExplorerItem, pro
   }
 }
 
-export async function synchronizeProject (core: Core, name: string, items: string[], progress: any) {
-  const projectWorkspaceFolder = getWorkspaceFolderByName(name)
+export async function synchronizeProject (
+  core: Core,
+  name: string,
+  items: string[],
+  progress: any,
+  workspaceFolder?: vscode.WorkspaceFolder
+) {
+  const projectWorkspaceFolder = workspaceFolder || getWorkspaceFolderByName(name)
   if (!projectWorkspaceFolder) return null
 
   const workspaceFolderPath = projectWorkspaceFolder.uri.fsPath
@@ -64,7 +72,8 @@ export async function downloadProjectLazily (
   vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     cancellable: true
-  }, async (progress: any) => {
+  }, async (progress: any, token: vscode.CancellationToken) => {
+    if (token.isCancellationRequested) return
     progress.report({ messsage: `Preparing to download ${name} ...` })
 
     const workspaceFolderPath = path.resolve(pathToSave, name)
@@ -176,7 +185,8 @@ export async function publishProjectItems (
   workspaceFolder: vscode.WorkspaceFolder,
   items: RequestItem[],
   range: number,
-  progress: any
+  progress: any,
+  token: vscode.CancellationToken
 ): Promise<void> {
   const { name } = workspaceFolder
 
@@ -191,6 +201,8 @@ export async function publishProjectItems (
   let offset = 0
 
   while (limit < items.length) {
+    if (token.isCancellationRequested) return
+
     limit = limit > items.length ? items.length : (limit + range)
     offset = (limit - range)
 
@@ -238,21 +250,38 @@ export async function publishProjectItems (
   core.xrfDocumentProvider.refresh()
 }
 
-export function groupDocumentsByProject (docs: vscode.TextDocument[]): GroupedRequestItems {
-  return docs.reduce((groups: any, doc: vscode.TextDocument) => {
+export function groupDocumentsByProject (docs: (vscode.TextDocument | SimplifiedDocument)[]): Promise<GroupedRequestItems> {
+  // Slice is the fastest way to split a string by length.
+  // See https://jsperf.com/string-split-by-length
+  const encodeAndSplitBinary = (doc: SimplifiedDocument, len: number) => {
+    const buffer = doc.file || Buffer.from(doc.getText())
+    const content = buffer.toString('base64')
+    const ret = []
+
+    for (var offset = 0, strLen = content.length; offset < strLen; offset += len) {
+      ret.push(content.slice(offset, len + offset))
+    }
+    return ret
+  }
+
+  return docs.reduce(async (promises: any, doc: any) => {
+    const groups = await promises
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
 
     if (workspaceFolder)  {
+      const content = doc.getText()
+      const binary = await isBinaryFile(doc.uri.fsPath)
       const eol = getDocumentEOLChars(doc)
       const current = groups[workspaceFolder.name] = groups[workspaceFolder.name] || {}
       current.workspaceFolder = workspaceFolder
       current.items = (current.items || []).concat([{
+        binary,
         path: doc.uri.fsPath,
-        content: doc.getText().split(eol)
+        content: !binary ? content.split(eol) : encodeAndSplitBinary(doc, 12000)
       }])
     }
     return groups
-  }, {})
+  }, Promise.resolve({}))
 }
 
 export async function getProjectXML (
@@ -278,15 +307,15 @@ export async function getProjectXML (
   if (writeErr) return notifyFatalError(core, name, writeErr, 'A error happened while writing the XML file.')
 }
 
-export async function fixProject (core: Core, name: string, progress: any) {
+export async function repairProject (core: Core, name: string, progress: any) {
   progress.report({ message: `XPort: Fixing irregularities in ${name}`})
-  let [err] = await to(core.api.fixProject(name))
+  let [err] = await to(core.api.repairProject(name))
 
   if (err) {
-    err = new Error('Failed to fetch the content.')
+    err = new Error(`Failed to repair the project '${name}'.`)
     return notifyFatalError(core, name, err, 'A error while fixing the project.')
   } else {
-    core.output.display('Fixed the irregularities without problems.', name)
+    core.output.display(`The project '${name}' has been repaired with success.`, name)
   }
 }
 

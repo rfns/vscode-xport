@@ -61,8 +61,18 @@ export async function documentExists (path: string) {
   return (stat && stat.isFile())
 }
 
-export async function getDocumentFromUri (uri: vscode.Uri): Promise<vscode.TextDocument> {
-  return vscode.workspace.openTextDocument(uri)
+export async function getDocumentText (uri: vscode.Uri): Promise<any> {
+  const filePath = uri.fsPath
+  const file = await fs.promises.readFile(filePath)
+  const content = file.toString()
+
+  return {
+    uri,
+    file,
+    eol: content.search('\r\n') ? vscode.EndOfLine.CRLF : vscode.EndOfLine.LF,
+    fileName: filePath,
+    getText() { return content },
+  }
 }
 
 export async function write (

@@ -23,16 +23,16 @@ const input = muxer.input(async (doc: vscode.TextDocument, core: Core) => {
 
 muxer.output(async (docs: any) => {
   let core: Core = docs[0].core
-  const groupedItems = groupDocumentsByProject(docs)
+  const groupedItems = await groupDocumentsByProject(docs)
 
   vscode.window.withProgress({
-    location: vscode.ProgressLocation.Window
-  }, async (progress: any) => {
+    location: vscode.ProgressLocation.Notification
+  }, async (progress: any, token: vscode.CancellationToken) => {
     const entries = Object.values(groupedItems)
 
     for (let i = 0, l = entries.length; i < l; i++) {
       const { items, workspaceFolder } = entries[i]
-      const promise = publishProjectItems(core, workspaceFolder, items, 1, progress)
+      const promise = publishProjectItems(core, workspaceFolder, items, 1, progress, token)
       items.map(item => core.documentLocker.lock(item.path, promise))
 
       await promise

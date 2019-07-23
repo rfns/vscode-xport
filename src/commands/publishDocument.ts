@@ -14,10 +14,10 @@ export function register (core: Core): vscode.Disposable {
     if (workspaceFolder) {
       return vscode.window.withProgress({
         location: vscode.ProgressLocation.Window
-      }, async (progress: any) => {
-        const { [workspaceFolder.name]: { items } } = groupDocumentsByProject([doc])
+      }, async (progress: any, token: vscode.CancellationToken) => {
+        const { [workspaceFolder.name]: { items } } = await groupDocumentsByProject([doc])
 
-        await publishProjectItems(core, workspaceFolder, items, 1, progress)
+        await publishProjectItems(core, workspaceFolder, items, 1, progress, token)
         core.projectExplorerProvider.refresh()
       })
     }
