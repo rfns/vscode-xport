@@ -69,7 +69,7 @@ export async function getDocumentText (uri: vscode.Uri): Promise<any> {
   return {
     uri,
     file,
-    eol: content.search('\r\n') ? vscode.EndOfLine.CRLF : vscode.EndOfLine.LF,
+    eol: (content.search('\r\n') > -1) ? vscode.EndOfLine.CRLF : vscode.EndOfLine.LF,
     fileName: filePath,
     getText() { return content },
   }
