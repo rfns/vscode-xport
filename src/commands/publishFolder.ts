@@ -13,15 +13,23 @@ export function register (core: Core): vscode.Disposable {
       location: vscode.ProgressLocation.Notification,
       cancellable: true
     }, async (progress: any, token: vscode.CancellationToken) => {
-      progress.report({ message: 'Discovering files (0 files found).' })
+      try {
+        await vscode.commands.executeCommand('setContext', 'busy', true)
+        core.projectExplorerProvider.refresh()
 
-      const uris = await expandPaths([uri], progress)
-      const documents = await Promise.all(uris.map(async uri => getDocumentText(uri)))
+        progress.report({ message: 'Discovering files (0 files found).' })
 
-      progress.report({ message: 'Grouping matches by project ...' })
-      const groups = await groupDocumentsByProject(documents)
+        const uris = await expandPaths([uri], progress)
+        const documents = await Promise.all(uris.map(async uri => getDocumentText(uri)))
 
-      await publishProjectItems(core, workspaceFolder, groups[workspaceFolder.name].items, 5, progress, token)
+        progress.report({ message: 'Grouping matches by project ...' })
+        const groups = await groupDocumentsByProject(documents)
+
+        await publishProjectItems(core, workspaceFolder, groups[workspaceFolder.name].items, 5, progress, token)
+      } finally {
+        await vscode.commands.executeCommand('setContext', 'busy', false)
+        core.projectExplorerProvider.refresh()
+      }
     })
   })
 }

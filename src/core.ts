@@ -79,7 +79,9 @@ export class Core {
 
       this.api.setup(this.configuration)
       this._configureHealthCheck()
+
       vscode.commands.executeCommand('setContext', 'projectExplorerEnabled', true)
+      vscode.commands.executeCommand('setContext', 'busy', false)
 
       if (this.disposables.length === 0) {
         this.registerProviders()
@@ -103,7 +105,7 @@ export class Core {
     this.disposables.push(commands.compileProject.register(this))
     this.disposables.push(commands.removeItem.register(this))
     this.disposables.push(commands.deleteItem.register(this))
-    this.disposables.push(commands.previewDocument.register(this))
+    this.disposables.push(commands.previewDocument.register())
     this.disposables.push(commands.compareDocumentVersions.register(this))
     this.disposables.push(commands.refreshItems.register(this))
     this.disposables.push(commands.findDocuments.register(this))

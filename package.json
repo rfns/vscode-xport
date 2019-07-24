@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.9.0",
+  "version": "0.9.1",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -225,11 +225,11 @@
       "commandPalette": [
         {
           "command": "xport.commands.findDocuments",
-          "when": "projectExplorerEnabled"
+          "when": "projectExplorerEnabled && !busy"
         },
         {
           "command": "xport.commands.publishWorkspaceFolder",
-          "when": "projectExplorerEnabled && workspaceFolderCount != 0"
+          "when": "projectExplorerEnabled && !busy && workspaceFolderCount != 0"
         },
         {
           "command": "xport.commands.importDocument",
@@ -295,63 +295,63 @@
       "explorer/context": [
         {
           "command": "xport.commands.publishFolder",
-          "when": "projectExplorerEnabled && explorerResourceIsFolder"
+          "when": "projectExplorerEnabled && !busy && explorerResourceIsFolder"
         }
       ],
       "editor/context": [
         {
           "command": "xport.commands.importDocument",
-          "when": "resourceScheme == xrf && workspaceFolderCount != 0 && !isSystemDocument"
+          "when": "resourceScheme == xrf && !busy && workspaceFolderCount != 0 && !isSystemDocument"
         },
         {
           "command": "xport.commands.publishDocument",
-          "when": "resourceScheme != xrf && workspaceFolderCount != 0 && !isSystemDocument"
+          "when": "resourceScheme != xrf && !busy && workspaceFolderCount != 0 && !isSystemDocument"
         }
       ],
       "view/item/context": [
         {
           "command": "xport.projectExplorer.downloadItem",
-          "when": "view == projectExplorer && viewItem == file",
+          "when": "view == projectExplorer && !busy && viewItem == file",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.downloadProject",
-          "when": "view == projectExplorer && viewItem == project",
+          "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.deleteProject",
-          "when": "view == projectExplorer && viewItem == project",
+          "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.compileProject",
-          "when": "view == projectExplorer && viewItem == project",
+          "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.removeProject",
-          "when": "view == projectExplorer && viewItem == project",
+          "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.repairProject",
-          "when": "view == projectExplorer && viewItem == project",
+          "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.removeItem",
-          "when": "view == projectExplorer && viewItem == file",
+          "when": "view == projectExplorer && !busy && viewItem == file",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.deleteItem",
-          "when": "view == projectExplorer && viewItem == file",
+          "when": "view == projectExplorer && !busy && viewItem == file",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.compareDocumentVersions",
-          "when": "view == projectExplorer && viewItem == file",
+          "when": "view == projectExplorer && !busy && viewItem == file",
           "group": "inline"
         }
       ],
