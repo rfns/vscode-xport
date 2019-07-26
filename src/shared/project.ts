@@ -234,9 +234,9 @@ export async function publishProjectItems (
       }
 
       const writingResults = await write(response.success, workspaceFolder.uri)
+      written += writingResults.success.length
 
       if (writingResults.failure.items.length) {
-        written += writingResults.success.length
         core.output.display(serializeFailures(writingResults.failure), name)
       }
     }
