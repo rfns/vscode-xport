@@ -1,5 +1,6 @@
 import 'isomorphic-fetch'
 import { Authentication } from '../types'
+import { RequestError } from '../errors'
 import to from 'await-to-js'
 
 interface ClientOptions {
@@ -26,7 +27,12 @@ function checkFalsyOk (status: number, response: any): null | never {
   let message = 'Failed to complete remote action.'
 
   if (status > 301) {
-    throw new Error(response.error.message)
+    if (response.error.internal_code) {
+      message = response.error.message
+      throw new RequestError(message, response.error.internal_code)
+    } else {
+      throw new RequestError(message, 5001)
+    }
   }
 
   return response

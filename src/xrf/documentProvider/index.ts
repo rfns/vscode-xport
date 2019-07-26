@@ -35,6 +35,7 @@ export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
       if (parsedUrl.path) {
         const resource = parsedUrl.path.startsWith('/') ? parsedUrl.path.substring(1) : parsedUrl.path
         const [err, response] = await to(this.core.api.preview(resource))
+        if (err && err.message && err.code === 5001) return err.message
         if (!response) return 'Empty response.'
 
         let error = err && err.message
