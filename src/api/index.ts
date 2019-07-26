@@ -67,13 +67,13 @@ export class API {
 
   async ping () {
     if (!this.client) throw new Error('Client is not configured.')
-    return this.client.head(`${this.host}/api/xport/ping`)
+    return this.client.head(`${this.host}/xport/api/ping`)
   }
 
   async projects (): Promise<ProjectList> {
     if (!this.client) return { projects: [] }
 
-    return this.client.get(`${this.host}/api/xport/namespaces/${this.namespace}/projects`)
+    return this.client.get(`${this.host}/xport/api/namespaces/${this.namespace}/projects`)
   }
 
   async paths (name: string): Promise<ItemPaths> {
@@ -116,7 +116,7 @@ export class API {
   async preview (item: string): Promise<ContentPreview> {
     if (!this.client) return { preview: [], binary: false }
 
-    const resource = `${this.host}/api/xport/namespaces/${this.namespace}/documents/preview/${item}`
+    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/preview/${item}`
     return this.client.get(resource)
   }
 
@@ -139,14 +139,14 @@ export class API {
   async documents (pattern: string): Promise<any> {
     if (!this.client) return { matches: [] }
 
-    const resource = `${this.host}/api/xport/namespaces/${this.namespace}/documents/find?pattern=${pattern}`
+    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/find?pattern=${pattern}`
     return this.client.get(resource)
   }
 
   async references (expression: string, max: number, pattern: string): Promise<DocumentReferences> {
     if (!this.client) return { references: [] }
 
-    const resource = `${this.host}/api/xport/namespaces/${this.namespace}/documents/references?expression=${expression}&pattern=${pattern}&max=${max}`
+    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/references?expression=${expression}&pattern=${pattern}&max=${max}`
     return this.client.get(resource)
   }
 
@@ -172,11 +172,11 @@ export class API {
   }
 
   getProjectBaseResource (name: string): string {
-    return `${this.host}/api/xport/namespaces/${this.namespace}/projects/${name}`
+    return `${this.host}/xport/api/namespaces/${this.namespace}/projects/${name}`
   }
 
   getDocumentsResource () {
-    return `${this.host}/api/xport/namespaces/${this.namespace}/documents`
+    return `${this.host}/xport/api/namespaces/${this.namespace}/documents`
   }
 
   private canMakeRequest (name?: string): boolean {
