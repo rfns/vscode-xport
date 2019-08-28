@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.9.4",
+  "version": "0.9.5",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -37,6 +37,11 @@
             "Only listens to configuration changes."
           ]
         },
+        "xport.remote": {
+          "type": "object",
+          "description": "Remote configuration to access the Caché instance",
+          "scope": "resource"
+        },
         "xport.remote.host": {
           "type": "string",
           "description": "The address where the XPort API is hosted:",
@@ -46,6 +51,11 @@
           "type": "string",
           "description": "The namespace that contains the source code:",
           "default": "USER"
+        },
+        "xport.authentication": {
+          "type": "object",
+          "description": "Credentials object used to authenticate in the Caché instance",
+          "scope": "resource"
         },
         "xport.authentication.username": {
           "type": "string",
@@ -105,7 +115,7 @@
     },
     "commands": [
       {
-        "command": "xport.commands.importDocument",
+        "command": "xport.commands.pullDocument",
         "title": "Import this document"
       },
       {
@@ -125,7 +135,7 @@
         "title": "XPort: Publish this folder to the server"
       },
       {
-        "command": "xport.projectExplorer.downloadItem",
+        "command": "xport.projectExplorer.pullItem",
         "title": "XPort: Download this item from the server",
         "icon": {
           "light": "media/light/arrow-down.svg",
@@ -133,7 +143,7 @@
         }
       },
       {
-        "command": "xport.projectExplorer.downloadProject",
+        "command": "xport.projectExplorer.pullProject",
         "title": "XPort: Download this project from the server",
         "icon": {
           "light": "media/light/desktop-download.svg",
@@ -181,14 +191,6 @@
         }
       },
       {
-        "command": "xport.projectExplorer.deleteProject",
-        "title": "XPort: Delete this project from the server",
-        "icon": {
-          "light": "media/light/x.svg",
-          "dark": "media/dark/x.svg"
-        }
-      },
-      {
         "command": "xport.commands.previewDocument",
         "title": "XPort: Preview this item (plain text)",
         "icon": {
@@ -206,7 +208,7 @@
       },
       {
         "command": "xport.projectExplorer.compareDocumentVersions",
-        "title": "XPort: Compare this local source with the server's version",
+        "title": "XPort: Compare the local source version with the one in the server",
         "icon": {
           "light": "media/light/diff.svg",
           "dark": "media/dark/diff.svg"
@@ -232,7 +234,7 @@
           "when": "projectExplorerEnabled && !busy && workspaceFolderCount != 0"
         },
         {
-          "command": "xport.commands.importDocument",
+          "command": "xport.commands.pullDocument",
           "when": "false"
         },
         {
@@ -244,11 +246,11 @@
           "when": "false"
         },
         {
-          "command": "xport.projectExplorer.downloadItem",
+          "command": "xport.projectExplorer.pullItem",
           "when": "false"
         },
         {
-          "command": "xport.projectExplorer.downloadProject",
+          "command": "xport.projectExplorer.pullProject",
           "when": "false"
         },
         {
@@ -300,7 +302,7 @@
       ],
       "editor/context": [
         {
-          "command": "xport.commands.importDocument",
+          "command": "xport.commands.pullDocument",
           "when": "resourceScheme == xrf && !busy && workspaceFolderCount != 0 && !isSystemDocument"
         },
         {
@@ -310,12 +312,12 @@
       ],
       "view/item/context": [
         {
-          "command": "xport.projectExplorer.downloadItem",
+          "command": "xport.projectExplorer.pullItem",
           "when": "view == projectExplorer && !busy && viewItem == file",
           "group": "inline"
         },
         {
-          "command": "xport.projectExplorer.downloadProject",
+          "command": "xport.projectExplorer.pullProject",
           "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },
@@ -326,11 +328,6 @@
         },
         {
           "command": "xport.projectExplorer.compileProject",
-          "when": "view == projectExplorer && !busy && viewItem == project",
-          "group": "inline"
-        },
-        {
-          "command": "xport.projectExplorer.deleteProject",
           "when": "view == projectExplorer && !busy && viewItem == project",
           "group": "inline"
         },

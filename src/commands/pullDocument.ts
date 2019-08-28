@@ -7,7 +7,7 @@ import { getWorkspaceFolderByName } from '../shared/workspace'
 import * as message from '../shared/message'
 
 export function register(core: Core): vscode.Disposable {
-  return vscode.commands.registerCommand('xport.commands.importDocument', async (uri: vscode.Uri) => {
+  return vscode.commands.registerCommand('xport.commands.pullDocument', async (uri: vscode.Uri) => {
     const name = await vscode.window.showInputBox({ prompt: 'Type the name of an existing workspace folder where the document should be added' })
     if (!name) return
 
@@ -19,15 +19,18 @@ export function register(core: Core): vscode.Disposable {
     }
 
     vscode.window.withProgress({
-      location: vscode.ProgressLocation.Window
-    }, async (progress: any) => {
+      location: vscode.ProgressLocation.Window,
+      cancellable: true
+    }, async (progress: any, token: vscode.CancellationToken) => {
+      if (token.isCancellationRequested) return
+
       if (vscode.window.activeTextEditor) {
         const relative = `./${uri.fsPath}`
         const destination = path.resolve(workspaceFolder.uri.fsPath, relative)
         const dir = path.dirname(destination)
         const doc = vscode.window.activeTextEditor.document
 
-        progress.report({ message: 'XPort: Writing file' })
+        progress.report({ message: 'Writing file' })
 
         await to(mkdirp(dir))
         const [err] = await to(writeFile(destination, doc.getText()))

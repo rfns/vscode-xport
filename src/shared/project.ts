@@ -8,7 +8,7 @@ import { isBinaryFile } from 'isbinaryfile'
 import { Core } from '../core'
 import { serializeFailures, write, getDocumentEOLChars } from './document'
 import { serializeErrors } from './error'
-import { ensureWorkspaceFolderExists, getWorkspaceFolderByName } from './workspace'
+import { ensureWorkspaceFolderExists } from './workspace'
 import { ProjectExplorerItem } from '../explorer/projectExplorer'
 import { MixedResponse, RequestItem, GroupedRequestItems, SimplifiedDocument } from '../types'
 
@@ -43,26 +43,7 @@ export async function compileProject (core: Core, item: ProjectExplorerItem, pro
   }
 }
 
-export async function synchronizeProject (
-  core: Core,
-  name: string,
-  items: string[],
-  progress: any,
-  workspaceFolder?: vscode.WorkspaceFolder
-) {
-  const projectWorkspaceFolder = workspaceFolder || getWorkspaceFolderByName(name)
-  if (!projectWorkspaceFolder) return null
-
-  const workspaceFolderPath = projectWorkspaceFolder.uri.fsPath
-  const delimiter = workspaceFolderPath.includes('\\') ? '\\' : '/'
-
-  const pathParts = projectWorkspaceFolder.uri.fsPath.split(delimiter)
-  const workspaceParentDir = pathParts.slice(0, pathParts.length - 1).join(delimiter)
-
-  return downloadProject(core, name, workspaceParentDir, items, progress)
-}
-
-export async function downloadProjectLazily (
+export async function pullWholeProject (
   core: Core,
   name: string,
   pathToSave: string,
@@ -74,17 +55,17 @@ export async function downloadProjectLazily (
     cancellable: true
   }, async (progress: any, token: vscode.CancellationToken) => {
     if (token.isCancellationRequested) return
-    progress.report({ messsage: `Preparing to download ${name} ...` })
+    progress.report({ messsage: `Preparing to pull ${name} ...` })
 
     const workspaceFolderPath = path.resolve(pathToSave, name)
     const workspaceFolder = await ensureWorkspaceFolderExists(workspaceFolderPath)
 
     if (workspaceFolder) {
       progress.report({ message: 'Counting items ...' })
-      const [err, result] = await to(core.api.count(workspaceFolder))
+      const [, result] = await to(core.api.count(workspaceFolder))
       let more = true
 
-      let downloaded = 0
+      let pulled = 0
       let failed = 0
       let written = 0
       let last = { index: 1 }
@@ -98,17 +79,17 @@ export async function downloadProjectLazily (
 
         progress.report({
           increment: step,
-          message: `Downloading sources and writing files (${completeRatio}% complete).`
+          message: `Pulling sources and writing files (${completeRatio}% complete).`
         })
 
         const [err, sourceList] = await to(core.api.listSources(workspaceFolder, { page, size }))
 
         if (err)  {
-          return notifyFatalError(core, name, err, 'A fatal error happened while downloading the project.')
+          return notifyFatalError(core, name, err, 'A fatal error happened while pulling the project.')
         }
 
         last = sourceList.success[sourceList.success.length - 1]
-        downloaded += sourceList.success.length
+        pulled += sourceList.success.length
         page += 1
         more = sourceList.more
 
@@ -126,58 +107,55 @@ export async function downloadProjectLazily (
       }
 
       if (failed > 0) {
-        core.message.displayError(core.output, `Failed to download ${failed} items.`, name)
+        core.message.displayError(core.output, `Failed to pull ${failed} items.`, name)
       }
 
-      core.output.display(`Operation result: ↓ ${downloaded} | ✎ ${written} | ✘ ${failed}.`, name)
+      core.output.display(`Operation result: ↓ ${pulled} | ✎ ${written} | ✘ ${failed}.`, name)
     }
   })
 }
 
-export async function downloadProject (
+export async function pullSelectedItems (
   core: Core,
-  name: string,
-  pathToSave: string,
-  items: string[],
-  progress: any
-): Promise<null | { writings:  MixedResponse, apiResponse: MixedResponse }> {
-  const workspaceFolderPath = path.resolve(pathToSave, name)
-  const workspaceFolder = await ensureWorkspaceFolderExists(workspaceFolderPath)
+  destination: vscode.Uri,
+  items: string[]
+): Promise<void> {
+  vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification
+  }, async (progress: any) => {
+    const workspaceFolder = await ensureWorkspaceFolderExists(destination.fsPath)
 
-  let apiResponse: any
-  let writings: any
+    let apiResponse: any
+    let writings: any
 
-  if (workspaceFolder) {
-    progress.report(`XPort: Downloading items from ${name}`)
-    const [err, r] = await to(core.api.pickSources(workspaceFolder, items))
+    if (workspaceFolder) {
+      const name = workspaceFolder.name
 
-    apiResponse = r
+      progress.report({ message: `Pulling items from ${name}` })
+      const [err, r] = await to(core.api.pickSources(workspaceFolder, items))
 
-    if (err) {
-      notifyFatalError(core, name, err, 'A fatal error happened while downloading the project.')
-    } else if (apiResponse) {
-      if (apiResponse.has_errors) {
-        core.output.display(serializeFailures(apiResponse.failure), name)
-        await message.displayError(core.output, `Failed to fetch ${apiResponse.success.length} items.`, name)
+      apiResponse = r
+
+      if (err) {
+        notifyFatalError(core, name, err, 'A fatal error happened while pull some items from the project.')
+      } else if (apiResponse) {
+        if (apiResponse.has_errors) {
+          core.output.display(serializeFailures(apiResponse.failure), name)
+          await message.displayError(core.output, `Failed to pull ${apiResponse.success.length} items.`, name)
+        }
+
+        progress.report({ message: `Writing files` })
+
+        writings = await write(apiResponse.success, workspaceFolder.uri)
+
+        if (writings.failure.items.length > 0) {
+          core.output.display(serializeFailures(writings.errors), name)
+          await message.displayError(core.output, `Failed to pull ${writings.failure.items.length} items.`, name)
+        }
+        core.output.display(`Operation result: ↓ ${apiResponse.success.length} | ✎ ${writings.success.length} | ✘ ${apiResponse.failure.items.length}.`, name)
       }
-
-      progress.report({ message: `XPort: Writing files` })
-
-      writings = await write(apiResponse.success, workspaceFolder.uri)
-      progress.report({ message: 'XPort: Standby' })
-
-      if (writings.failure.items.length > 0) {
-        core.output.display(serializeFailures(writings.errors), name)
-        await message.displayError(core.output, `Failed to fetch ${writings.failure.items.length} items.`, name)
-      }
-      core.output.display(`Operation result: ↓ ${apiResponse.success.length} | ✎ ${writings.success.length} | ✘ ${apiResponse.failure.items.length}.`, name)
     }
-  }
-
-  return {
-    writings,
-    apiResponse
-  }
+  })
 }
 
 export async function publishProjectItems (
@@ -203,14 +181,17 @@ export async function publishProjectItems (
   while (limit < items.length) {
     if (token.isCancellationRequested) return
 
-    limit = limit > items.length ? items.length : (limit + range)
-    offset = (limit - range)
+    limit = limit > items.length || (limit + range) > items.length
+      ? items.length
+      : (limit + range)
 
     previousRatio = completeRatio
     completeRatio = Math.floor((100 * limit) / items.length)
 
     const selection = items.slice(offset, limit)
     const step = completeRatio - previousRatio
+
+    offset = offset + range
 
     progress.report({
       increment: step,
@@ -297,7 +278,7 @@ export async function getProjectXML (
 
   if (err || !response || !response.xml) {
     if (!err) err = new Error('Failed to fetch the content.')
-    return notifyFatalError(core, name, err, 'A error happened while downloading the project XML.')
+    return notifyFatalError(core, name, err, 'A error happened while pulling the project XML.')
   }
 
   const basingPath = workspaceFolder.uri.fsPath

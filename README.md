@@ -15,12 +15,12 @@ This extension allows you to develop [InterSystems Caché®](https://www.intersy
 * Optimized to handle big projects (5000+ items).
 * Optimized to handle binary files (like images).
 * Publish and compile on save.
-* Static files preview and download.
-* Source code preview and download.
+* Static files preview and pull.
+* Source code preview and pull.
 * Project removal.
 * Remote project deletion.
 * Full-length project publication to instance.
-* Full-length project download from instance.
+* Full-length project pull from instance.
 * User feedback (progress bar, error notification etc).
 * Protects your sources from duplication over projects.
 * Protects your sources from accidental delete if the protect is not empty.

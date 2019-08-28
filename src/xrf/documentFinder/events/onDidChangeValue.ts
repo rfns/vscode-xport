@@ -16,9 +16,9 @@ export function register (
     quickPicker.busy = false
     if (err) {
       quickPicker.items = [{ label: 'Failed to fetch due to a request error.' }]
-      core.output.display('A fatal error happened retrieving the document list.', 'root')
-      core.output.display(`Details: ${err.message}`, 'root')
-      return message.displayError(core.output, 'Failed to complete the operation.', 'root')
+      core.output.display('A fatal error happened retrieving the document list.', 'GLOBAL')
+      core.output.display(`Details: ${err.message}`, 'GLOBAL')
+      return message.displayError(core.output, 'Failed to complete the operation.', 'GLOBAL')
     }
 
     if (response.matches.length) {

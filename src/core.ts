@@ -54,28 +54,28 @@ export class Core {
 
     if (!this.configuration || !this.configuration.enabled) {
       this.disable()
-      if (!this.configuration) this.output.display('Warning: No configuration found.', 'root')
-      else this.output.display(`Warning: Extension is disabled. in this state there's no communication with the server. Set the configuration 'xport.core.enabled' to true in order to enable it.`, 'root')
+      if (!this.configuration) this.output.display('Warning: No configuration found.', 'GLOBAL')
+      else this.output.display(`Warning: Extension is disabled. in this state there's no communication with the server. Set the configuration 'xport.core.enabled' to true in order to enable it.`, 'GLOBAL')
     } else {
-      this.output.display('Found a valid configuration.', 'root')
-      this.output.display('Configuration is as follows:', 'root')
-      this.output.display(`Endpoint is set to ${this.configuration.host}.`, 'root')
-      this.output.display(`Using namespace ${this.configuration.namespace}.`, 'root')
+      this.output.display('Found a valid configuration.', 'GLOBAL')
+      this.output.display('Configuration is as follows:', 'GLOBAL')
+      this.output.display(`Endpoint is set to ${this.configuration.host}.`, 'GLOBAL')
+      this.output.display(`Using namespace ${this.configuration.namespace}.`, 'GLOBAL')
 
       if (this.configuration.authentication) {
-        this.output.display(`Logging as ${this.configuration.authentication.username}.`, 'root')
+        this.output.display(`Logging as ${this.configuration.authentication.username}.`, 'GLOBAL')
       } else {
-        this.output.display('Warning: No credentials were provided. The client API will not be able to communicate with the server.', 'root')
+        this.output.display('Warning: No credentials were provided. The client API will not be able to communicate with the server.', 'GLOBAL')
       }
 
       const headerEntries = this.configuration.headers && Object.entries(this.configuration.headers) || []
 
       if (headerEntries.length) {
-        this.output.display(`Using custom headers: ${headerEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`, 'root')
+        this.output.display(`Using custom headers: ${headerEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`, 'GLOBAL')
       } else {
-        this.output.display('No custom headers were provided.', 'root')
+        this.output.display('No custom headers were provided.', 'GLOBAL')
       }
-      this.output.display('Watching for configuration changes.', 'root')
+      this.output.display('Watching for configuration changes.', 'GLOBAL')
 
       this.api.setup(this.configuration)
       this._configureHealthCheck()
@@ -95,13 +95,13 @@ export class Core {
     this.disposables.push(events.onDidSaveTextDocument.listen(this))
     this.disposables.push(events.onDidChangeActiveTextEditor.listen(this))
     this.disposables.push(events.onWillSaveTextDocument.listen(this))
-    this.output.display('Watching for text document changes.', 'root')
+    this.output.display('Watching for text document changes.', 'GLOBAL')
   }
 
   registerCommands () {
     this.disposables.push(commands.deleteProject.register(this))
-    this.disposables.push(commands.downloadItem.register(this))
-    this.disposables.push(commands.downloadProject.register(this))
+    this.disposables.push(commands.pullItem.register(this))
+    this.disposables.push(commands.pullProject.register(this))
     this.disposables.push(commands.compileProject.register(this))
     this.disposables.push(commands.removeItem.register(this))
     this.disposables.push(commands.deleteItem.register(this))
@@ -109,14 +109,14 @@ export class Core {
     this.disposables.push(commands.compareDocumentVersions.register(this))
     this.disposables.push(commands.refreshItems.register(this))
     this.disposables.push(commands.findDocuments.register(this))
-    this.disposables.push(commands.importDocument.register(this))
+    this.disposables.push(commands.pullDocument.register(this))
     this.disposables.push(commands.publishDocument.register(this))
     this.disposables.push(commands.publishFolder.register(this))
     this.disposables.push(commands.publishWorkspaceFolder.register(this))
     this.disposables.push(commands.repairProject.register(this))
     this.disposables.push(commands.previewBinary.register(this))
 
-    this.output.display('Registered commands.', 'root')
+    this.output.display('Registered commands.', 'GLOBAL')
   }
 
   registerProviders () {
