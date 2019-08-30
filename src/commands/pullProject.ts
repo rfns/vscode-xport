@@ -14,10 +14,10 @@ export function register(core: Core): vscode.Disposable {
 
       const pathToSave = await vscode.window.showInputBox({ prompt: 'Type the path where the workspace folder should be created' })
       if (!pathToSave) return
-      return pullWholeProject(core, projectName, pathToSave)
+      await pullWholeProject(core, projectName, pathToSave)
+      core.projectExplorerProvider.refresh()
     } finally {
       vscode.commands.executeCommand('setContext', 'busy', false)
-      core.projectExplorerProvider.refresh()
     }
   })
 }
