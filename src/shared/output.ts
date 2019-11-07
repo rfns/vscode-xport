@@ -12,7 +12,7 @@ if (currentWorkspace) {
 export const channel = vscode.window.createOutputChannel('XPort');
 
 export function display (message: string, workspaceName: string = defaultWorkspaceName) {
-  channel.appendLine(`[XPort] {${new Date().toLocaleString()}} (${workspaceName || 'GLOBAL'}): ${message}`)
+  channel.appendLine(`[XPort] {${new Date().toLocaleString()}} (${workspaceName || 'WORKSPACE'}): ${message}`)
 }
 
 export function showOutput (preserveFocus?: boolean) {

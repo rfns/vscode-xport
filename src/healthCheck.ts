@@ -26,8 +26,8 @@ export class HealthCheck {
       output.display(`Health check routine took ${end.getTime() - start.getTime()} ms to finish.`)
 
       if (err && this._core.configuration) {
-        output.display(`Warning: Failed to check ${this._core.configuration.host}: server is offline or unavailable: Reason: ${err.message}`, 'GLOBAL')
-        message.displayError(output, `The server is unavailable. You'll not be able to pull or publish any sources meanwhile.`, 'GLOBAL')
+        output.display(`Warning: Failed to check ${this._core.configuration.host}: server is offline or unavailable: Reason: ${err.message}`, 'WORKSPACE')
+        message.displayError(output, `The server is unavailable. You'll not be able to fetch or publish any sources meanwhile.`, 'WORKSPACE')
       }
     }, this._intervalInMilliseconds)
   }

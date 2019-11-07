@@ -20,10 +20,10 @@ export class API {
   private namespace: string | undefined
   private client: Client | null
   private output: any
-  private compilerOptions: string = 'cku'
+  private flags: string = 'cku'
 
   constructor (
-    options: Configuration | null,
+    options: Configuration,
     output: any
   ) {
 
@@ -36,8 +36,8 @@ export class API {
     if (!options) return
 
     this.host = options.host
+    this.flags = options.flags
     this.namespace = options.namespace || this.namespace
-    this.compilerOptions = options.compilerOptions
 
     if (this.host && this.namespace) {
       this.client = new Client({
@@ -83,7 +83,7 @@ export class API {
     return this.client.get(resource)
   }
 
-  async pickSources (workspaceFolder: vscode.WorkspaceFolder, files: string[]): Promise<MixedResponse> {
+  async pickSources (workspaceFolder: vscode.WorkspaceFolder, files: { path: string, encoding: string }[]): Promise<MixedResponse> {
     const { name } = workspaceFolder
 
     if (!this.client || !this.canMakeRequest(name)) {
@@ -113,19 +113,23 @@ export class API {
     return this.client.get(resource)
   }
 
-  async preview (item: string): Promise<ContentPreview> {
+  async preview (item: string, encoding: string): Promise<ContentPreview> {
     if (!this.client) return { preview: [], binary: false }
 
-    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/preview/${item}`
+    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/preview/${item}?encoding=${encoding}`
     return this.client.get(resource)
   }
 
-  async publish (workspaceFolder: vscode.WorkspaceFolder, items: RequestItem[]): Promise<MixedResponse> {
+  async publish (
+    workspaceFolder: vscode.WorkspaceFolder,
+    items: RequestItem[],
+    flags?: string
+  ): Promise<MixedResponse> {
     const { name } = workspaceFolder
     if (!this.client) return { has_errors: false, success: [], failure: { header: '', items: [] }}
 
     const resource = `${this.getProjectBaseResource(name)}/items/publish`
-    return this.client.post(resource, { items, compilerOptions: this.compilerOptions })
+    return this.client.post(resource, { items, flags })
   }
 
   async deleteProject (name: string): Promise<boolean> {
@@ -154,7 +158,14 @@ export class API {
     if (!this.client) return { error: null, log: [] }
 
     const resource = `${this.getProjectBaseResource(name)}/compile`
-    return this.client.post(resource, { compilerOptions: this.compilerOptions })
+    return this.client.post(resource, { flags: this.flags })
+  }
+
+  async compileItems (name: string, items: string[]): Promise<any> {
+    if (!this.client) return { error: null, log: [] }
+
+    const resource = `${this.getProjectBaseResource(name)}/items/compile`
+    return this.client.post(resource, { flags: this.flags, items })
   }
 
   async xml (name: string): Promise<ProjectXML> {

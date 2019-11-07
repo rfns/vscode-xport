@@ -79,8 +79,7 @@ export function getPathPart (element: ProjectExplorerItem) {
             element.items,
             fullPath,
             element.depth + 1,
-            itemCommand,
-            item.binary
+            itemCommand
           )
       ]
     }, [])
@@ -90,17 +89,17 @@ export async function getProjects (core: Core) {
   try {
     const { projects } = await core.api.projects()
     return projects.map(({ name, has_items }) =>
-    new ProjectExplorerItem(
-      name,
-      name,
-      has_items
-        ? vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.None,
-      'project',
-      'prj',
-      [],
-      ''
-    )
+      new ProjectExplorerItem(
+        name,
+        name,
+        has_items
+          ? vscode.TreeItemCollapsibleState.Collapsed
+          : vscode.TreeItemCollapsibleState.None,
+        name.startsWith('Default_') ? 'defaultProject' : 'project',
+        'prj',
+        [],
+        ''
+      )
   )
   } catch (err) {
     return [{

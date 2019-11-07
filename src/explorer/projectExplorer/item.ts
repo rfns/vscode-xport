@@ -23,8 +23,7 @@ export class ProjectExplorerItem extends vscode.TreeItem {
     items: any,
     fullPath: string,
     depth: number = 0,
-    command?: vscode.Command,
-    binary?: boolean
+    command?: vscode.Command
   ) {
     super(label, collapsibleState)
     this.project = root
@@ -69,6 +68,8 @@ export class ProjectExplorerItem extends vscode.TreeItem {
         else if (this.binary) { name = 'file-binary.svg' }
         else { name = 'file.svg' }
         break
+      case 'defaultProject':
+        // fall through
       case 'project':
         name = 'file-submodule.svg'
         break

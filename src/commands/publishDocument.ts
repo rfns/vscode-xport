@@ -6,18 +6,29 @@ import { Core } from '../core'
 export function register (core: Core): vscode.Disposable {
   return vscode.commands.registerCommand('xport.commands.publishDocument', async () => {
     const { activeTextEditor } = vscode.window
-    if (!activeTextEditor) return
+    if (!activeTextEditor || !core.configuration) return
 
     const doc = activeTextEditor.document
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
+    const { flags } = core.configuration
 
     if (workspaceFolder) {
       return vscode.window.withProgress({
-        location: vscode.ProgressLocation.Window
+        location: vscode.ProgressLocation.Window,
+        cancellable: true
       }, async (progress: any, token: vscode.CancellationToken) => {
-        const { [workspaceFolder.name]: { items } } = await groupDocumentsByProject([doc])
+        const { [workspaceFolder.name]: { items } } = await groupDocumentsByProject([doc], token)
 
-        await publishProjectItems(core, workspaceFolder, items, 1, progress, token)
+        await publishProjectItems({
+          core,
+          workspaceFolder,
+          items,
+          range: 1,
+          progress,
+          token,
+          flags
+        })
+
         core.projectExplorerProvider.refresh()
       })
     }

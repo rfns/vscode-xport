@@ -7,11 +7,12 @@ export function register (core: Core): vscode.Disposable {
   return vscode.commands.registerCommand('xport.projectExplorer.deleteProject', async (item: ProjectExplorerItem) => {
     try {
       if (item.collapsibleState !== vscode.TreeItemCollapsibleState.None) {
-        await vscode.window.showErrorMessage(
-          `The project ${item.project} is not empty thus cannot be deleted. Remove or delete its items before deleting the project itself.`,
-          'Close'
+        const choice = await vscode.window.showWarningMessage(
+          `WARNING! The project ${item.project} is not empty. Continue?`,
+          'No',
+          'Yes'
         )
-        return
+        if (!choice || choice == 'No') return
       }
 
       const deleted = await core.api.deleteProject(item.project)

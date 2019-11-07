@@ -30,12 +30,10 @@ function findAdequateWorkspaceFolder (): vscode.WorkspaceFolder | null {
   return null
 }
 
-export function getWorkspaceConfiguration (): Configuration | null {
-  const configuration = vscode.workspace.getConfiguration('xport')
+export function getWorkspaceConfiguration (folder?: vscode.WorkspaceFolder): Configuration {
+  let configuration = vscode.workspace.getConfiguration('xport', folder && folder.uri)
 
-  if (!(configuration.remote.host && configuration.remote.namespace)) {
-    return null
-  }
+  if (!configuration) configuration = vscode.workspace.getConfiguration('xport')
 
   return {
     host: configuration.remote.host,
@@ -44,8 +42,12 @@ export function getWorkspaceConfiguration (): Configuration | null {
     authentication: configuration.authentication,
     enabled: configuration.core.enabled,
     healthCheck: configuration.healthCheck.interval,
-    compilerOptions: configuration.compiler.flags,
-    autoExportXML: configuration.project.autoExportXML
+    flags: configuration.compiler.flags,
+    autoExportXML: configuration.project.autoExportXML,
+    watchFolders: configuration.project.watchFolders,
+    sourceRoot: configuration.project.sourceRoot,
+    encodings: configuration.transport.encoding,
+    refreshables: configuration.transport.refetch
   }
 }
 
@@ -98,8 +100,13 @@ export async function ensureWorkspaceFolderExists (
   workspaceFolderPath: string
 ): Promise<vscode.WorkspaceFolder | undefined>  {
   let workspaceFolder
+  const name = path.basename(workspaceFolderPath)
 
-  if (isNewWorkspaceFolderPath(workspaceFolderPath)) {
+  workspaceFolder = getWorkspaceFolderByName(name)
+
+  if (workspaceFolder) {
+    return workspaceFolder
+  } else if (isNewWorkspaceFolderPath(workspaceFolderPath)) {
     workspaceFolder = await createWorkspaceFolder(workspaceFolderPath)
   } else {
     const uri = vscode.Uri.file(workspaceFolderPath)

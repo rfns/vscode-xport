@@ -2,6 +2,8 @@ import * as vscode from 'vscode'
 import * as url from 'url'
 import { to } from 'await-to-js'
 import { Core } from '../../core'
+import { getFileEncodingConfiguration } from '../../shared/document'
+import { EncodingDirection } from '../../types'
 
 export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
   private _onDidChange: vscode.EventEmitter<any> = new vscode.EventEmitter<vscode.Uri>();
@@ -34,7 +36,9 @@ export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
       const parsedUrl = url.parse(uri.toString())
       if (parsedUrl.path) {
         const resource = parsedUrl.path.startsWith('/') ? parsedUrl.path.substring(1) : parsedUrl.path
-        const [err, response] = await to(this.core.api.preview(resource))
+        const [err, response] = await to(
+          this.core.api.preview(resource, getFileEncodingConfiguration(uri, EncodingDirection.OUTPUT))
+        )
         if (err && err.message && err.code === 5001) return err.message
         if (!response) return 'Empty response.'
 

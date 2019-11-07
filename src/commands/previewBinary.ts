@@ -10,6 +10,7 @@ export function register (core: Core) {
       <html>
         <head>
           <meta name="viewport" content="width=device-width, minimum-scale=0.1">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${url};">
           <title>Binary preview</title>
         </head>
         <body>

@@ -21,18 +21,25 @@ export class ProjectExplorerProvider implements vscode.TreeDataProvider<ProjectE
   }
 
   async getChildren (element?: ProjectExplorerItem): Promise<any[]> {
-    if (!element) {
-      const childrens = await getProjects(this.core)
-      return childrens
-    } else if (element.label) {
-      if (element.location === 'project') {
-        const { paths } = await this.core.api.paths(element.label)
-        return getTypes(element, paths)
-      } else if (element.location.match(/folder|package|file|type/)) {
-        return getPathPart(element)
+    await vscode.commands.executeCommand('setContext', 'busy', true)
+    try {
+      let items = []
+      if (!element) {
+        items = await getProjects(this.core)
+      } else if (element.label) {
+        if (element.location === 'project' || element.location === 'defaultProject') {
+          const { paths } = await this.core.api.paths(element.label)
+          items = getTypes(element, paths)
+        } else if (element.location.match(/folder|package|file|type/)) {
+          items = getPathPart(element)
+        }
       }
+      await vscode.commands.executeCommand('setContext', 'busy', false)
+      return items
+    } catch (err) {
+      await vscode.commands.executeCommand('setContext', 'busy', false)
+      throw err
     }
-    return []
   }
 }
 

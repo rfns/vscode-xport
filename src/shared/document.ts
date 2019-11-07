@@ -3,15 +3,16 @@ import * as fs from 'fs-extra'
 import * as path from 'path'
 import * as os from 'os'
 import { to } from 'await-to-js'
-import { ItemDetail, FailureOverview, FailedItem } from '../types'
+import { ItemDetail, FailureOverview, FailedItem, SimplifiedDocument, EncodingDirection } from '../types'
 import { serializeErrors } from './error'
+import { getWorkspaceConfiguration } from './workspace'
 
 export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
 export const CACHE_FOLDERS = /[\\/]public|cls|inc|mac|int|mvi|mvb|bas[\//]/
 
 async function safeWrite (
   destination: string,
-  item: ItemDetail,
+  item: ItemDetail
 ): Promise<boolean> {
   try {
     // Don't write anyting because we already have the source.
@@ -19,13 +20,11 @@ async function safeWrite (
 
     await fs.mkdirp(path.dirname(destination))
 
-    let data = item.content.join(item.binary ? '' : os.EOL)
+    let data = item.binary
+      ? dechunkifyBinary(item.content, 12000)
+      : dechunkify(item.content)
 
-    if (!item.binary) {
-      await fs.writeFile(destination, data)
-    } else {
-      await fs.writeFile(destination, new Buffer(data, 'base64'))
-    }
+    await fs.writeFile(destination, data)
     return true
   } catch (err) {
     return false
@@ -69,7 +68,6 @@ export async function getDocumentText (uri: vscode.Uri): Promise<any> {
   return {
     uri,
     file,
-    eol: (content.search('\r\n') > -1) ? vscode.EndOfLine.CRLF : vscode.EndOfLine.LF,
     fileName: filePath,
     getText() { return content },
   }
@@ -82,12 +80,16 @@ export async function write (
   let filesWritten: any = [];
   let filesNotWritten: any = [];
 
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(workspaceFolderUri)
+  const configuration = getWorkspaceConfiguration(workspaceFolder)
+  const sourceRoot = configuration && configuration.sourceRoot || ''
+
   await Promise.all(
     items.map(async (item: ItemDetail) => {
       let isWritten = false
 
       const message = `Failed to write item ${item.name} to the disk. Path: ${item.path}`
-      const destination = path.resolve(workspaceFolderUri.fsPath, item.path)
+      const destination = path.resolve(workspaceFolderUri.fsPath, sourceRoot, item.path)
       isWritten = await safeWrite(destination, item)
 
       if (!isWritten) {
@@ -143,5 +145,52 @@ export async function expandPaths (roots: vscode.Uri[], progress: any): Promise<
     progress.report({ message: `Discovering files (${filesDiscovered.length} files found).` })
     return filesDiscovered
   }, Promise.all([]))
+}
+
+export function getCompilableDocuments (uris: vscode.Uri[]) {
+  return uris.filter(
+    (uri: vscode.Uri) => [...CACHE_ROUTINES, 'cls', 'csr', 'csp'].some(
+      (type: string) => uri.fsPath.endsWith(type))
+  )
+}
+
+export function chunkifyBinary (doc: SimplifiedDocument, len: number) {
+  const buffer = doc.file || Buffer.from(doc.getText())
+  const content = buffer.toString('base64')
+
+  return chunkify(content, len)
+}
+
+export function chunkify(content: string, size: number) {
+  let chunks = []
+
+  for (let offset = 0, strLen = content.length; offset < strLen; offset += size) {
+    // Slice is the fastest way to split a string by length.
+    // See https://jsperf.com/string-split-by-length
+    chunks.push(content.slice(offset, size + offset))
+  }
+
+  return chunks
+}
+
+export const dechunkify = (chunks: string[]) => chunks.join('')
+
+export function dechunkifyBinary (chunks: string[], size: number) {
+  return new Buffer(dechunkify(chunks), 'base64')
+}
+
+export function isRefreshable (uri: vscode.Uri) {
+  const configuration = getWorkspaceConfiguration()
+  const refreshables = configuration.refreshables.split(',').map(s => s.trim().toLowerCase())
+
+  return refreshables.some(refreshable => uri.fsPath.endsWith(`.${refreshable}`))
+}
+
+export function getFileEncodingConfiguration (uri: vscode.Uri, direction: EncodingDirection) {
+  const configuration = getWorkspaceConfiguration()
+  const encodings = configuration.encodings[direction]
+
+  const extension = (uri.fsPath.split('.').pop() || '').toLowerCase()
+  return encodings[extension] || encodings.default
 }
 

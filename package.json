@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.9.5",
+  "version": "0.12.1",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -22,7 +22,7 @@
     "title": "XPort configuration",
     "configuration": {
       "type": "object",
-      "title": "XPort configuration",
+      "title": "XPort",
       "properties": {
         "xport.core.enabled": {
           "type": "boolean",
@@ -31,31 +31,42 @@
             false
           ],
           "description": "Enable or disable Caché integration:",
-          "default": true,
+          "default": false,
           "enumDescriptions": [
             "Displays the project explorer and publish the files whenever they are modified.",
             "Only listens to configuration changes."
           ]
-        },
-        "xport.remote": {
-          "type": "object",
-          "description": "Remote configuration to access the Caché instance",
-          "scope": "resource"
         },
         "xport.remote.host": {
           "type": "string",
           "description": "The address where the XPort API is hosted:",
           "default": "http://localhost:57772"
         },
+        "xport.transport.encoding": {
+          "description": "A hash of extensions and its strategies to handle the input/output encoding:",
+          "type": "object",
+          "default": {
+            "input": {
+              "csp": "RAW",
+              "csr": "RAW",
+              "default": "UTF8"
+            },
+            "output": {
+              "csp": "RAW",
+              "csr": "RAW",
+              "default": "UTF8"
+            }
+          }
+        },
+        "xport.transport.refetch": {
+          "description": "A list of file types that XPort should fetch back from the server after the publication:",
+          "type": "string",
+          "default": "cls"
+        },
         "xport.remote.namespace": {
           "type": "string",
           "description": "The namespace that contains the source code:",
           "default": "USER"
-        },
-        "xport.authentication": {
-          "type": "object",
-          "description": "Credentials object used to authenticate in the Caché instance",
-          "scope": "resource"
         },
         "xport.authentication.username": {
           "type": "string",
@@ -90,6 +101,16 @@
             "Don't export the XML at all."
           ]
         },
+        "xport.project.watchFolders": {
+          "type": "string",
+          "default": "cls,mac,int,inc,public",
+          "description": "Select which folders XPort should watch for changes"
+        },
+        "xport.project.sourceRoot": {
+          "type": "string",
+          "default": "",
+          "description": "The folder name inside the workspace folder where the sources should be exported"
+        },
         "xport.healthCheck.interval": {
           "type": "string",
           "enum": [
@@ -115,36 +136,53 @@
     },
     "commands": [
       {
-        "command": "xport.commands.pullDocument",
-        "title": "Import this document"
+        "command": "xport.commands.fetchDocument",
+        "title": "XPort: Fetch and add this item",
+        "enablement": "!busy"
       },
       {
         "command": "xport.commands.findDocuments",
-        "title": "XPort: Find documents"
+        "title": "XPort: Find documents",
+        "enablement": "!busy"
       },
       {
         "command": "xport.commands.publishWorkspaceFolder",
-        "title": "XPort: Publish workspace folder"
+        "title": "XPort: Publish workspace folder",
+        "enablement": "!busy"
       },
       {
         "command": "xport.commands.publishDocument",
-        "title": "XPort: Publish this item to the server"
+        "title": "XPort: Publish this item",
+        "enablement": "!busy"
       },
       {
         "command": "xport.commands.publishFolder",
-        "title": "XPort: Publish this folder to the server"
+        "title": "XPort: Publish this folder",
+        "enablement": "!busy"
       },
       {
-        "command": "xport.projectExplorer.pullItem",
-        "title": "XPort: Download this item from the server",
+        "command": "xport.commands.disableExtension",
+        "title": "XPort: Disable extension for this workspace",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.enableExtension",
+        "title": "XPort: Enable extension for this workspace",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.projectExplorer.pickItem",
+        "title": "XPort: Fetch this item",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/arrow-down.svg",
           "dark": "media/dark/arrow-down.svg"
         }
       },
       {
-        "command": "xport.projectExplorer.pullProject",
-        "title": "XPort: Download this project from the server",
+        "command": "xport.projectExplorer.fetchProject",
+        "title": "XPort: Fetch this project",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/desktop-download.svg",
           "dark": "media/dark/desktop-download.svg"
@@ -153,6 +191,7 @@
       {
         "command": "xport.projectExplorer.deleteProject",
         "title": "XPort: Delete this project from the server",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/trashcan.svg",
           "dark": "media/dark/trashcan.svg"
@@ -161,6 +200,7 @@
       {
         "command": "xport.projectExplorer.compileProject",
         "title": "XPort: Compile this project",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/zap.svg",
           "dark": "media/dark/zap.svg"
@@ -169,6 +209,7 @@
       {
         "command": "xport.projectExplorer.removeItem",
         "title": "XPort: Remove this item from this project",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/x.svg",
           "dark": "media/dark/x.svg"
@@ -176,7 +217,8 @@
       },
       {
         "command": "xport.projectExplorer.deleteItem",
-        "title": "XPort: Delete this item from this project and server",
+        "title": "XPort: Delete this item permanently",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/trashcan.svg",
           "dark": "media/dark/trashcan.svg"
@@ -185,6 +227,7 @@
       {
         "command": "xport.projectExplorer.repairProject",
         "title": "XPort: Repair this project",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/tools.svg",
           "dark": "media/dark/tools.svg"
@@ -208,7 +251,8 @@
       },
       {
         "command": "xport.projectExplorer.compareDocumentVersions",
-        "title": "XPort: Compare the local source version with the one in the server",
+        "title": "XPort: Compare with server",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/diff.svg",
           "dark": "media/dark/diff.svg"
@@ -217,6 +261,7 @@
       {
         "command": "xport.projectExplorer.refreshItems",
         "title": "XPort: Refresh the project list",
+        "enablement": "!busy",
         "icon": {
           "light": "media/light/sync.svg",
           "dark": "media/dark/sync.svg"
@@ -226,6 +271,14 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "xport.commands.disableExtension",
+          "when": "projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.enableExtension",
+          "when": "!projectExplorerEnabled"
+        },
+        {
           "command": "xport.commands.findDocuments",
           "when": "projectExplorerEnabled && !busy"
         },
@@ -234,7 +287,7 @@
           "when": "projectExplorerEnabled && !busy && workspaceFolderCount != 0"
         },
         {
-          "command": "xport.commands.pullDocument",
+          "command": "xport.commands.fetchDocument",
           "when": "false"
         },
         {
@@ -246,11 +299,11 @@
           "when": "false"
         },
         {
-          "command": "xport.projectExplorer.pullItem",
+          "command": "xport.projectExplorer.pickItem",
           "when": "false"
         },
         {
-          "command": "xport.projectExplorer.pullProject",
+          "command": "xport.projectExplorer.fetchProject",
           "when": "false"
         },
         {
@@ -297,58 +350,82 @@
       "explorer/context": [
         {
           "command": "xport.commands.publishFolder",
-          "when": "projectExplorerEnabled && !busy && explorerResourceIsFolder"
+          "when": "projectExplorerEnabled && explorerResourceIsFolder"
+        },
+        {
+          "command": "xport.commands.publishDocument",
+          "when": "resourceScheme != xrf && !explorerResourceIsFolder && workspaceFolderCount != 0 && !isSystemDocument"
         }
       ],
       "editor/context": [
         {
-          "command": "xport.commands.pullDocument",
-          "when": "resourceScheme == xrf && !busy && workspaceFolderCount != 0 && !isSystemDocument"
+          "command": "xport.commands.fetchDocument",
+          "when": "resourceScheme == xrf && workspaceFolderCount != 0 && !isSystemDocument"
         },
         {
           "command": "xport.commands.publishDocument",
-          "when": "resourceScheme != xrf && !busy && workspaceFolderCount != 0 && !isSystemDocument"
+          "when": "resourceScheme != xrf && workspaceFolderCount != 0 && !isSystemDocument"
         }
       ],
       "view/item/context": [
         {
-          "command": "xport.projectExplorer.pullItem",
-          "when": "view == projectExplorer && !busy && viewItem == file",
+          "command": "xport.projectExplorer.pickItem",
+          "when": "view == projectExplorer && viewItem == file",
           "group": "inline"
         },
         {
-          "command": "xport.projectExplorer.pullProject",
-          "when": "view == projectExplorer && !busy && viewItem == project",
+          "command": "xport.projectExplorer.fetchProject",
+          "when": "view == projectExplorer && viewItem == project",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.deleteProject",
-          "when": "view == projectExplorer && !busy && viewItem == project",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "view == projectExplorer && viewItem == defaultProject",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.compileProject",
-          "when": "view == projectExplorer && !busy && viewItem == project",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.compileProject",
+          "when": "view == projectExplorer && viewItem == defaultProject",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.repairProject",
-          "when": "view == projectExplorer && !busy && viewItem == project",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.repairProject",
+          "when": "view == projectExplorer && viewItem == defaultProject",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.removeItem",
-          "when": "view == projectExplorer && !busy && viewItem == file",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "view == projectExplorer && viewItem == package",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.deleteItem",
-          "when": "view == projectExplorer && !busy && viewItem == file",
+          "when": "view == projectExplorer && viewItem == file",
           "group": "inline"
         },
         {
           "command": "xport.projectExplorer.compareDocumentVersions",
-          "when": "view == projectExplorer && !busy && viewItem == file",
+          "when": "view == projectExplorer && viewItem == file",
           "group": "inline"
         }
       ],

@@ -2,7 +2,6 @@ import 'isomorphic-fetch'
 import { Authentication } from '../types'
 import { RequestError } from '../errors'
 import to from 'await-to-js'
-
 interface ClientOptions {
   headers?: object
   authentication?: Authentication
@@ -23,13 +22,17 @@ function makeRequestHeaders (method: string, headers?: object, body?: object) {
   }
 }
 
-function checkFalsyOk (status: number, response: any): null | never {
-  let message = 'Failed to complete remote action.'
+function checkFalsyOk (status: number, response?: any, rawText?: string): null | never {
+  let message = 'Failed to complete the remote action.'
+
+  if (rawText) {
+    message = `${message}, received unexpected server error: ${rawText}`
+  }
 
   if (status > 301) {
-    if (response.error.internal_code) {
+    if (response && response.error.message) {
       message = response.error.message
-      throw new RequestError(message, response.error.internal_code)
+      throw new RequestError(message, response.error.internal_code || 5002)
     } else {
       throw new RequestError(message, 5001)
     }
@@ -40,9 +43,16 @@ function checkFalsyOk (status: number, response: any): null | never {
 
 export async function fetchJSON (url: string, data?: any): Promise<any> {
   const response = await handleSession(url, data)
-  let json = await response.json()
+  let rawText = await response.text()
+  let json
 
-  return checkFalsyOk(response.status, json)
+  try {
+    json = JSON.parse(rawText)
+  } catch (ex) {
+    throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText}`)
+  }
+
+  return checkFalsyOk(response.status, json, rawText)
 }
 
 export async function handleSession (url: string, data?: any): Promise<Response> {

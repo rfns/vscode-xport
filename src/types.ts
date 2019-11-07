@@ -8,12 +8,30 @@ export const FileTypes = {
 export interface Configuration {
   host: string
   headers?: object
-  authentication?: Authentication
+  authentication: Authentication
   namespace: string
   enabled: boolean
   healthCheck: string
-  compilerOptions: string
+  flags: string
   autoExportXML: boolean
+  watchFolders: string
+  sourceRoot: string
+  encodings: FileEncoding
+  refreshables: string
+}
+
+export type FileEncoding = Object & {
+  input: {
+    [key: string]: string
+  }
+  output: {
+    [key: string]: string
+  }
+}
+
+export enum EncodingDirection {
+  INPUT = 'input',
+  OUTPUT = 'output'
 }
 
 export interface Authentication {
@@ -49,8 +67,11 @@ export interface ItemDetail {
   binary?: boolean
 }
 
-export interface FailedItem {
+export interface FailedItem extends RequestError {
   item_name: string
+}
+
+export interface RequestError {
   error?: ItemError
   errors?: ItemError[]
 }
@@ -108,5 +129,10 @@ export interface SimplifiedDocument {
   uri: vscode.Uri
   file?: Buffer
   getText(): string
+}
+
+export interface WorkspaceFolderConfiguration {
+  folder: vscode.WorkspaceFolder
+  configuration: Configuration
 }
 

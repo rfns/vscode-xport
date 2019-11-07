@@ -1,18 +1,18 @@
-import { FailedItem } from '../types'
+import { RequestError } from '../types'
 
-export function serializeErrors (item: FailedItem, header: string = '')  {
+export function serializeErrors (request: RequestError, header: string = '')  {
   let message = header || ''
 
-  if (item.error) {
-    message = `${message}  Error: ${item.error.message}`
+  if (request.error) {
+    message = `${message}  Error: ${request.error.message}`
 
-    if (item.error.origin) {
-      message = `${message}  ${item.error.origin ? `\n  > Origin: ${item.error.origin.message}` : ''}\n`
+    if (request.error.origin) {
+      message = `${message}  ${request.error.origin ? `\n  > Origin: ${request.error.origin.message}` : ''}\n`
     }
   }
 
-  if (item.errors && item.errors.length > 0) {
-    message = `${message}  Errors: ${item.errors.map((error, index) => {
+  if (request.errors && request.errors.length > 0) {
+    message = `${message}  Errors: ${request.errors.map((error, index) => {
       return `\n   [${index}] ${error.message}${error.origin? `\n    > Origin: ${error.origin.message}` : ''}`
     }).join(' ')}`
   }

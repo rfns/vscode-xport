@@ -7,7 +7,7 @@ import { getWorkspaceFolderByName } from '../shared/workspace'
 import * as message from '../shared/message'
 
 export function register(core: Core): vscode.Disposable {
-  return vscode.commands.registerCommand('xport.commands.pullDocument', async (uri: vscode.Uri) => {
+  return vscode.commands.registerCommand('xport.commands.fetchDocument', async (uri: vscode.Uri) => {
     const name = await vscode.window.showInputBox({ prompt: 'Type the name of an existing workspace folder where the document should be added' })
     if (!name) return
 
@@ -36,7 +36,7 @@ export function register(core: Core): vscode.Disposable {
         const [err] = await to(writeFile(destination, doc.getText()))
 
         if (err) {
-          core.output.display('A fatal error happened while publishing changes.')
+          core.output.display('A fatal error happened while fetching the document.')
           core.output.display(`Details: ${err.message}`)
           await message.displayError(core.output, 'Unable to complete the action due to a fatal error.')
         } else {

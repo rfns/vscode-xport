@@ -4,7 +4,7 @@ import * as message from './shared/message'
 import * as events from './events'
 import * as commands from './commands'
 import { API } from './api'
-import { getWorkspaceConfiguration } from './shared/workspace'
+import { getWorkspaceConfiguration, getWorkspaceFolderByName } from './shared/workspace'
 import { Configuration } from './types'
 import { ProjectExplorerProvider } from './explorer/projectExplorer'
 import { XRFDocumentProvider, XRF_SCHEME } from './xrf'
@@ -19,23 +19,31 @@ export class Core {
   public readonly xrfDocumentProvider: XRFDocumentProvider = new XRFDocumentProvider(this)
   public readonly documentLocker = new DocumentLocker()
 
-  public configuration: Configuration | null = null
-  public disposables: vscode.Disposable[]
+  public configuration: Configuration = getWorkspaceConfiguration()
 
   private _healthCheck?: HealthCheck
   private _onDidChangeConfiguration: vscode.Disposable = events.onDidChangeConfiguration.listen(this)
+  private _internalDisposables: vscode.Disposable[] = []
+  private _disposables: vscode.Disposable[] = []
 
   constructor () {
     this.api = new API(this.configuration, output)
-    this.disposables = []
+    this._disposables = []
 
     this.output = output
     this.message = message
+
+    this._registerInternalDiposables()
   }
 
   dispose () {
     this._onDidChangeConfiguration.dispose()
     this._softDispose()
+  }
+
+  private _registerInternalDiposables () {
+    this._internalDisposables.push(commands.disableExtension.register())
+    this._internalDisposables.push(commands.enableExtension.register())
   }
 
   private _softDispose () {
@@ -44,8 +52,15 @@ export class Core {
       this._healthCheck = undefined
     }
 
-    this.disposables.forEach(disposable => disposable.dispose())
-    this.disposables = []
+    this._disposables.forEach(disposable => disposable.dispose())
+    this._disposables = []
+  }
+
+  get disposables () {
+    return [
+      ...this._disposables,
+      ...this._internalDisposables
+    ]
   }
 
   init () {
@@ -54,28 +69,11 @@ export class Core {
 
     if (!this.configuration || !this.configuration.enabled) {
       this.disable()
-      if (!this.configuration) this.output.display('Warning: No configuration found.', 'GLOBAL')
-      else this.output.display(`Warning: Extension is disabled. in this state there's no communication with the server. Set the configuration 'xport.core.enabled' to true in order to enable it.`, 'GLOBAL')
+      if (!this.configuration) this.output.display('WARNING: No configuration found.', 'WORKSPACE')
+      else this.output.display(`WARNING: Extension is disabled. in this state there's no communication with the server. Set the configuration 'xport.core.enabled' to true in order to enable it.`, 'WORKSPACE')
     } else {
-      this.output.display('Found a valid configuration.', 'GLOBAL')
-      this.output.display('Configuration is as follows:', 'GLOBAL')
-      this.output.display(`Endpoint is set to ${this.configuration.host}.`, 'GLOBAL')
-      this.output.display(`Using namespace ${this.configuration.namespace}.`, 'GLOBAL')
-
-      if (this.configuration.authentication) {
-        this.output.display(`Logging as ${this.configuration.authentication.username}.`, 'GLOBAL')
-      } else {
-        this.output.display('Warning: No credentials were provided. The client API will not be able to communicate with the server.', 'GLOBAL')
-      }
-
-      const headerEntries = this.configuration.headers && Object.entries(this.configuration.headers) || []
-
-      if (headerEntries.length) {
-        this.output.display(`Using custom headers: ${headerEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}`, 'GLOBAL')
-      } else {
-        this.output.display('No custom headers were provided.', 'GLOBAL')
-      }
-      this.output.display('Watching for configuration changes.', 'GLOBAL')
+      this.output.display('Found a valid configuration.', 'WORKSPACE')
+      this._describeConfiguration()
 
       this.api.setup(this.configuration)
       this._configureHealthCheck()
@@ -83,45 +81,51 @@ export class Core {
       vscode.commands.executeCommand('setContext', 'projectExplorerEnabled', true)
       vscode.commands.executeCommand('setContext', 'busy', false)
 
-      if (this.disposables.length === 0) {
+      if (this._disposables.length === 0) {
         this.registerProviders()
-        this.registerListenersAndWatchers()
+        this.registerListenersAndWatchers(this.configuration)
         this.registerCommands()
       }
     }
   }
 
-  registerListenersAndWatchers () {
-    this.disposables.push(events.onDidSaveTextDocument.listen(this))
-    this.disposables.push(events.onDidChangeActiveTextEditor.listen(this))
-    this.disposables.push(events.onWillSaveTextDocument.listen(this))
-    this.output.display('Watching for text document changes.', 'GLOBAL')
+  private _describeConfiguration () {
+    const { configuration } = this
+    const headerEntries = configuration.headers && Object.entries(configuration.headers) || []
+    this.output.display(`Host: ${configuration.host} Namespace: ${configuration.namespace}, User: ${configuration.authentication.username}. Headers: ${headerEntries.map(([k, v]) => `${k}: ${v}`).join(', ') || 'none'}.`, 'WORKSPACE')
+  }
+
+  registerListenersAndWatchers (configuration: Configuration) {
+    this._disposables.push(events.onDidSaveTextDocument.listen(this))
+    this._disposables.push(events.onDidChangeActiveTextEditor.listen(this))
+    this._disposables.push(events.onWillSaveTextDocument.listen(this))
+    this.output.display(`Watching the following folders: ${configuration.watchFolders}.`, 'WORKSPACE')
   }
 
   registerCommands () {
-    this.disposables.push(commands.deleteProject.register(this))
-    this.disposables.push(commands.pullItem.register(this))
-    this.disposables.push(commands.pullProject.register(this))
-    this.disposables.push(commands.compileProject.register(this))
-    this.disposables.push(commands.removeItem.register(this))
-    this.disposables.push(commands.deleteItem.register(this))
-    this.disposables.push(commands.previewDocument.register())
-    this.disposables.push(commands.compareDocumentVersions.register(this))
-    this.disposables.push(commands.refreshItems.register(this))
-    this.disposables.push(commands.findDocuments.register(this))
-    this.disposables.push(commands.pullDocument.register(this))
-    this.disposables.push(commands.publishDocument.register(this))
-    this.disposables.push(commands.publishFolder.register(this))
-    this.disposables.push(commands.publishWorkspaceFolder.register(this))
-    this.disposables.push(commands.repairProject.register(this))
-    this.disposables.push(commands.previewBinary.register(this))
+    this._disposables.push(commands.deleteProject.register(this))
+    this._disposables.push(commands.pickItem.register(this))
+    this._disposables.push(commands.fetchProject.register(this))
+    this._disposables.push(commands.compileProject.register(this))
+    this._disposables.push(commands.removeItem.register(this))
+    this._disposables.push(commands.deleteItem.register(this))
+    this._disposables.push(commands.previewDocument.register())
+    this._disposables.push(commands.compareDocumentVersions.register(this))
+    this._disposables.push(commands.refreshItems.register(this))
+    this._disposables.push(commands.findDocuments.register(this))
+    this._disposables.push(commands.fetchDocument.register(this))
+    this._disposables.push(commands.publishDocument.register(this))
+    this._disposables.push(commands.publishFolder.register(this))
+    this._disposables.push(commands.publishWorkspaceFolder.register(this))
+    this._disposables.push(commands.repairProject.register(this))
+    this._disposables.push(commands.previewBinary.register(this))
 
-    this.output.display('Registered commands.', 'GLOBAL')
+    this.output.display('All commands have been registered.', 'WORKSPACE')
   }
 
   registerProviders () {
-    this.disposables.push(vscode.workspace.registerTextDocumentContentProvider(XRF_SCHEME, this.xrfDocumentProvider))
-    this.disposables.push(vscode.window.createTreeView('projectExplorer', { treeDataProvider: this.projectExplorerProvider, showCollapseAll: true }))
+    this._disposables.push(vscode.workspace.registerTextDocumentContentProvider(XRF_SCHEME, this.xrfDocumentProvider))
+    this._disposables.push(vscode.window.createTreeView('projectExplorer', { treeDataProvider: this.projectExplorerProvider, showCollapseAll: true }))
   }
 
   disable () {

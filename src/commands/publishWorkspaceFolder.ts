@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { Core } from '../core'
 
 export function register (core: Core): vscode.Disposable {
-  return vscode.commands.registerCommand('xport.commands.publishWorkspaceFolder', async () => {
+  return vscode.commands.registerCommand('xport.commands.publishWorkspaceFolder', async (uri: vscode.Uri) => {
     if (!vscode.workspace.workspaceFolders) return
 
     const choices = vscode.workspace.workspaceFolders.map(workspaceFolder => {
