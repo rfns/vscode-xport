@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.13.0",
+  "version": "0.13.2",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -47,14 +47,10 @@
           "type": "object",
           "default": {
             "input": {
-              "csp": "RAW",
-              "csr": "RAW",
-              "default": "UTF8"
+              "default": "utf-8"
             },
             "output": {
-              "csp": "RAW",
-              "csr": "RAW",
-              "default": "UTF8"
+              "default": "utf-8"
             }
           }
         },

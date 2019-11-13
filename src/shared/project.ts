@@ -353,13 +353,13 @@ export function groupDocumentsByProject (docs: (vscode.TextDocument | Simplified
 
     if (workspaceFolder)  {
       const content = doc.getText()
-      const binary = await isBinaryFile(doc.uri.fsPath)
+      const binary = doc.binary || (await isBinaryFile(doc.uri.fsPath))
       const current = groups[workspaceFolder.name] = groups[workspaceFolder.name] || {}
 
-      const encoding = !binary ? {
-        in: getFileEncodingConfiguration(doc.uri, EncodingDirection.INPUT),
-        out: getFileEncodingConfiguration(doc.uri, EncodingDirection.OUTPUT)
-      } : false
+      const encoding = {
+        in: binary ? 'RAW' : getFileEncodingConfiguration(doc.uri, EncodingDirection.INPUT),
+        out: binary ? 'RAW' : getFileEncodingConfiguration(doc.uri, EncodingDirection.OUTPUT)
+      }
 
       current.workspaceFolder = workspaceFolder
       current.items = (current.items || []).concat([{

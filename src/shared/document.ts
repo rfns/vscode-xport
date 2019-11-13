@@ -6,6 +6,7 @@ import { to } from 'await-to-js'
 import { ItemDetail, FailureOverview, FailedItem, SimplifiedDocument, EncodingDirection } from '../types'
 import { serializeErrors } from './error'
 import { getWorkspaceConfiguration } from './workspace'
+import { isBinaryFile } from 'isbinaryfile'
 
 export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
 export const CACHE_FOLDERS = /[\\/]public|cls|inc|mac|int|mvi|mvb|bas[\//]/
@@ -62,12 +63,16 @@ export async function documentExists (path: string) {
 
 export async function getDocumentText (uri: vscode.Uri): Promise<any> {
   const filePath = uri.fsPath
-  const file = await fs.promises.readFile(filePath)
+  const binary = await isBinaryFile(uri.fsPath)
+  const encoding = !binary && getFileEncodingConfiguration(uri, EncodingDirection.INPUT) || null
+
+  const file = await fs.promises.readFile(filePath, encoding)
   const content = file.toString()
 
   return {
     uri,
     file,
+    binary,
     fileName: filePath,
     getText() { return content },
   }
@@ -139,7 +144,11 @@ export async function expandPaths (roots: vscode.Uri[], progress: any): Promise<
       const childrenUris = await expandPaths(innerPaths, progress)
       filesDiscovered = [...filesDiscovered, ...childrenUris ]
     } else {
-      filesDiscovered = uri.fsPath.match(CACHE_FOLDERS) ? [...allUris, uri] : allUris
+      const fileName = path.basename(uri.fsPath)
+      const isQualified = !fileName.startsWith('.') && !fileName.endsWith('.') && fileName.includes('.')
+      filesDiscovered = isQualified && uri.fsPath.match(CACHE_FOLDERS)
+        ? [...allUris, uri]
+        : allUris
     }
 
     progress.report({ message: `Discovering files (${filesDiscovered.length} files found).` })
