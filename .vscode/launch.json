@@ -8,7 +8,6 @@
 			"name": "Run Extension",
 			"type": "extensionHost",
       "request": "launch",
-      "preLaunchTask": "npm: watch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"

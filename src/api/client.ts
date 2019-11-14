@@ -48,8 +48,8 @@ export async function fetchJSON (url: string, data?: any): Promise<any> {
 
   try {
     json = JSON.parse(rawText)
-  } catch (ex) {
-    throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText}`)
+  } catch (err) {
+    throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText || err.message}`)
   }
 
   return checkFalsyOk(response.status, json, rawText)

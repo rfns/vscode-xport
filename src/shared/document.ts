@@ -16,9 +16,6 @@ async function safeWrite (
   item: ItemDetail
 ): Promise<boolean> {
   try {
-    // Don't write anyting because we already have the source.
-    if (item.content.length === 0) return true
-
     await fs.mkdirp(path.dirname(destination))
 
     let data = item.binary
@@ -95,6 +92,8 @@ export async function write (
 
       const message = `Failed to write item ${item.name} to the disk. Path: ${item.path}`
       const destination = path.resolve(workspaceFolderUri.fsPath, sourceRoot, item.path)
+    // Don't write anyting because we already have the source.
+      if (item.content.length === 0) return true
       isWritten = await safeWrite(destination, item)
 
       if (!isWritten) {

@@ -415,8 +415,18 @@
           "group": "inline"
         },
         {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "view == projectExplorer && viewItem == folder",
+          "group": "inline"
+        },
+        {
           "command": "xport.projectExplorer.deleteItem",
           "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteItem",
+          "when": "view == projectExplorer && viewItem == folder",
           "group": "inline"
         },
         {

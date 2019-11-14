@@ -23,6 +23,20 @@ async function notifyFatalError (core: Core, name: string, err: Error, header: s
   await message.displayError(core.output, 'Unable to complete the action due to a fatal error.', name)
 }
 
+export function findRelativePaths (item: ProjectExplorerItem): string[] {
+  let normalizedItems = []
+
+  if (['package', 'folder'].includes(item.location)) {
+    normalizedItems = item.items
+      .filter((it: any) => it.path.startsWith(item.fullPath))
+      .map((it: any) => `/${it.path}`)
+  } else {
+    normalizedItems = [`/${item.fullPath}`]
+  }
+
+  return normalizedItems
+}
+
 export async function compileItems ({
   core,
   project,
@@ -414,6 +428,80 @@ export async function repairProject (core: Core, name: string, progress: any) {
     return notifyFatalError(core, name, err, 'A error while fixing the project.')
   } else {
     core.output.display(`The project '${name}' has been repaired with success.`, name)
+  }
+}
+
+export async function deleteItems ({
+  core,
+  projectName,
+  progress,
+  items,
+  token
+} : {
+  core: Core,
+  projectName: string,
+  items: string[],
+  progress: any
+  token: vscode.CancellationToken,
+}) {
+  try {
+    progress.report({ message: `Deleting ${items.length} items ...` })
+    if (token.isCancellationRequested) return
+
+    const response = await core.api.delete(projectName, items)
+
+    core.projectExplorerProvider.refresh()
+
+    if (response.success.length) {
+      core.output.display(`Deleted ${response.success.length} items from the server.`, projectName)
+      await message.displayWarning(`${response.success.length} items have been deleted from the server.`, projectName)
+    }
+
+    if (response.has_errors) {
+      core.output.display(serializeFailures(response.failure), projectName)
+      await message.displayError(core.output, response.failure.header, projectName)
+    }
+  } catch (err) {
+    core.output.display('A fatal error happened while deleting items.', projectName)
+    core.output.display(`Details: ${err.message}`, projectName)
+    await message.displayError(core.output, 'Failed to complete the operation.', projectName)
+  }
+}
+
+export async function removeItems ({
+  core,
+  projectName,
+  progress,
+  items,
+  token
+} : {
+  core: Core,
+  projectName: string,
+  items: string[],
+  progress: any
+  token: vscode.CancellationToken,
+}) {
+  try {
+    progress.report({ message: `Removing ${items.length} items from ${projectName} ...` })
+    if (token.isCancellationRequested) return
+
+    const response = await core.api.delete(projectName, items)
+
+    core.projectExplorerProvider.refresh()
+
+    if (response.success.length) {
+      core.output.display(`Removed ${response.success.length} items from the server.`, projectName)
+      await message.displayWarning(`${response.success.length} items have been removed from ${projectName}.`, projectName)
+    }
+
+    if (response.has_errors) {
+      core.output.display(serializeFailures(response.failure), projectName)
+      await message.displayError(core.output, response.failure.header, projectName)
+    }
+  } catch (err) {
+    core.output.display('A fatal error happened while removing items.', projectName)
+    core.output.display(`Details: ${err.message}`, projectName)
+    await message.displayError(core.output, 'Failed to complete the operation.', projectName)
   }
 }
 
