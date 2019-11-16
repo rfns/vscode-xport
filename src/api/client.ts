@@ -1,7 +1,8 @@
 import 'isomorphic-fetch'
+import to from 'await-to-js'
+
 import { Authentication } from '../types'
 import { RequestError } from '../errors'
-import to from 'await-to-js'
 interface ClientOptions {
   headers?: object
   authentication?: Authentication
