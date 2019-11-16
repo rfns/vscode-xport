@@ -10,7 +10,7 @@ import { serializeFailures, write, chunkify, chunkifyBinary, getFileEncodingConf
 import { serializeErrors } from './error'
 import { ensureWorkspaceFolderExists, getWorkspaceConfiguration, getWorkspaceFolderByName } from './workspace'
 import { ProjectExplorerItem } from '../explorer/projectExplorer'
-import { RequestItem, GroupedRequestItems, SimplifiedDocument, EncodingDirection } from '../types'
+import { OutgoingItem, GroupedOutgoingItems, DocumentTextProxy, EncodingDirection } from '../types'
 import { API } from '../api'
 
 export function getProjectName (uri: vscode.Uri): string {
@@ -289,7 +289,7 @@ export async function publishProjectItems ({
 }: {
   core: Core,
   workspaceFolder: vscode.WorkspaceFolder,
-  items: RequestItem[],
+  items: OutgoingItem[],
   range: number,
   progress: any,
   token: vscode.CancellationToken,
@@ -359,7 +359,10 @@ export async function publishProjectItems ({
   core.output.display(`Operation result: ↑ ${success} | ✎ ${written} | ✘ ${failed}.`, name)
 }
 
-export function groupDocumentsByProject (docs: (vscode.TextDocument | SimplifiedDocument)[], token: vscode.CancellationToken): Promise<GroupedRequestItems> {
+export function groupDocumentsByProject (
+  docs: (vscode.TextDocument | DocumentTextProxy)[],
+  token: vscode.CancellationToken
+): Promise<GroupedOutgoingItems> {
   return docs.reduce(async (promises: any, doc: any) => {
     const groups = await promises
     if (token.isCancellationRequested) return groups

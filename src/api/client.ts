@@ -8,8 +8,6 @@ interface ClientOptions {
   authentication?: Authentication
 }
 
-let cookieJar = ''
-
 function makeRequestHeaders (method: string, headers?: object, body?: object) {
   return {
     method,
@@ -17,7 +15,7 @@ function makeRequestHeaders (method: string, headers?: object, body?: object) {
     credentials: 'same-origin',
     headers: {
       ...headers,
-      cookie: cookieJar,
+      cookie: window.localStorage.session,
       'Content-Type': 'application/json; charset=utf-8'
     }
   }
@@ -61,7 +59,7 @@ export async function handleSession (url: string, data?: any): Promise<Response>
   const setCookie = response.headers.get('set-cookie')
 
   if (setCookie) {
-    cookieJar = setCookie
+    window.localStorage.session = setCookie
   }
 
   return response

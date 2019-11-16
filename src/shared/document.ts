@@ -3,7 +3,7 @@ import * as fs from 'fs-extra'
 import * as path from 'path'
 import * as os from 'os'
 import { to } from 'await-to-js'
-import { ItemDetail, FailureOverview, FailedItem, SimplifiedDocument, EncodingDirection } from '../types'
+import { IncomingItem, FailureOverview, IncomingItemFailure, DocumentTextProxy, EncodingDirection } from '../types'
 import { serializeErrors } from './error'
 import { getWorkspaceConfiguration } from './workspace'
 import { isBinaryFile } from 'isbinaryfile'
@@ -13,7 +13,7 @@ export const CACHE_FOLDERS = /[\\/]public|cls|inc|mac|int|mvi|mvb|bas[\//]/
 
 async function safeWrite (
   destination: string,
-  item: ItemDetail
+  item: IncomingItem
 ): Promise<boolean> {
   try {
     await fs.mkdirp(path.dirname(destination))
@@ -29,36 +29,7 @@ async function safeWrite (
   }
 }
 
-export function isTypeOf (name: string, type: string): boolean {
-  return name.toLowerCase().lastIndexOf(`.${type}`) > -1
-}
-
-export function getDestination (
-  workspaceFolder: vscode.WorkspaceFolder,
-  name: string
-): string | undefined {
-
-  const isSimpleType = () => CACHE_ROUTINES.some(t => isTypeOf(name, t))
-
-  const rootPath = workspaceFolder.uri.fsPath
-
-  if (isTypeOf(name, 'cls')) {
-    const classPath = name.replace(/\.(?!cls)/i, '/').replace('.CLS', '.cls')
-    return path.resolve(rootPath, `cls/${classPath}`)
-  } else if (isSimpleType()) {
-    const type = name.split('.').filter(part => CACHE_ROUTINES.includes(part)).pop()
-    return path.resolve(rootPath, `${type}/${name}`)
-  } else {
-    return path.resolve(rootPath, `public/${name}`)
-  }
-}
-
-export async function documentExists (path: string) {
-  const [err, stat] = await to(fs.stat(path))
-  return (stat && stat.isFile())
-}
-
-export async function getDocumentText (uri: vscode.Uri): Promise<any> {
+export async function getDocumentText (uri: vscode.Uri): Promise<DocumentMock> {
   const filePath = uri.fsPath
   const binary = await isBinaryFile(uri.fsPath)
   const encoding = !binary && getFileEncodingConfiguration(uri, EncodingDirection.INPUT) || null
@@ -76,7 +47,7 @@ export async function getDocumentText (uri: vscode.Uri): Promise<any> {
 }
 
 export async function write (
-  items: ItemDetail[],
+  items: IncomingItem[],
   workspaceFolderUri: vscode.Uri
 ): Promise<any> {
   let filesWritten: any = [];
@@ -87,7 +58,7 @@ export async function write (
   const sourceRoot = configuration && configuration.sourceRoot || ''
 
   await Promise.all(
-    items.map(async (item: ItemDetail) => {
+    items.map(async (item: IncomingItem) => {
       let isWritten = false
 
       const message = `Failed to write item ${item.name} to the disk. Path: ${item.path}`
@@ -123,7 +94,7 @@ export function getDocumentEOLChars (doc: vscode.TextDocument) {
 export function serializeFailures (overview: FailureOverview) : string {
   let message = `${overview.header}`
 
-  overview.items.forEach((item: FailedItem) => {
+  overview.items.forEach((item: IncomingItemFailure) => {
     message = `${message}\n  Item: ${item.item_name}\n`
     message = serializeErrors(item, message)
   })
@@ -162,7 +133,7 @@ export function getCompilableDocuments (uris: vscode.Uri[]) {
   )
 }
 
-export function chunkifyBinary (doc: SimplifiedDocument, len: number) {
+export function chunkifyBinary (doc: DocumentTextProxy, len: number) {
   const buffer = doc.file || Buffer.from(doc.getText())
   const content = buffer.toString('base64')
 

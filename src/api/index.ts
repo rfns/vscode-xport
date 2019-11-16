@@ -6,9 +6,9 @@ import { getWorkspaceConfiguration } from '../shared/workspace'
 import {
   Configuration,
   ContentPreview,
-  MixedResponse,
+  OperationReport,
   ProjectList,
-  RequestItem,
+  OutgoingItem,
   ItemPaths,
   DocumentReferences,
   ProjectXML,
@@ -47,7 +47,7 @@ export class API {
     }
   }
 
-  async remove (name: string, items: string[]): Promise<MixedResponse> {
+  async remove (name: string, items: string[]): Promise<OperationReport> {
     if (!this.client || !this.canMakeRequest(name)) {
       return { has_errors: false, success: [], failure: { header: '', items: [] }}
     }
@@ -56,7 +56,7 @@ export class API {
     return this.client.post(resource, items)
   }
 
-  async delete (name: string, items: string[]): Promise<MixedResponse> {
+  async delete (name: string, items: string[]): Promise<OperationReport> {
     if (!this.client || !this.canMakeRequest(name)) {
       return { has_errors: false, success: [], failure: { header: '', items: [] }}
     }
@@ -83,7 +83,7 @@ export class API {
     return this.client.get(resource)
   }
 
-  async pickSources (workspaceFolder: vscode.WorkspaceFolder, files: { path: string, encoding: string }[]): Promise<MixedResponse> {
+  async pickSources (workspaceFolder: vscode.WorkspaceFolder, files: { path: string, encoding: string }[]): Promise<OperationReport> {
     const { name } = workspaceFolder
 
     if (!this.client || !this.canMakeRequest(name)) {
@@ -122,9 +122,9 @@ export class API {
 
   async publish (
     workspaceFolder: vscode.WorkspaceFolder,
-    items: RequestItem[],
+    items: OutgoingItem[],
     flags?: string
-  ): Promise<MixedResponse> {
+  ): Promise<OperationReport> {
     const { name } = workspaceFolder
     if (!this.client) return { has_errors: false, success: [], failure: { header: '', items: [] }}
 

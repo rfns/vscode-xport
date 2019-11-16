@@ -39,14 +39,14 @@ export interface Authentication {
   password: string
 }
 
-export interface RequestItem {
+export interface OutgoingItem {
   path: string
   content: string
 }
 
-export type GroupedRequestItems = Object & {
+export type GroupedOutgoingItems = Object & {
   [key: string]: {
-    items: [RequestItem],
+    items: [OutgoingItem],
     workspaceFolder: vscode.WorkspaceFolder
   }
 }
@@ -58,7 +58,7 @@ export interface ItemError {
   origin?: ItemError
 }
 
-export interface ItemDetail {
+export interface IncomingItem {
   name: string
   content: string[]
   last_change: string
@@ -67,7 +67,7 @@ export interface ItemDetail {
   binary?: boolean
 }
 
-export interface FailedItem extends RequestError {
+export interface IncomingItemFailure extends RequestError {
   item_name: string
 }
 
@@ -78,12 +78,12 @@ export interface RequestError {
 
 export interface FailureOverview {
   header: string
-  items: FailedItem[]
+  items: IncomingItemFailure[]
 }
 
-export interface MixedResponse {
+export interface OperationReport {
   failure: FailureOverview
-  success: ItemDetail[]
+  success: IncomingItem[]
   warning?: string
   has_errors: boolean
 }
@@ -125,14 +125,10 @@ export interface Pagination {
   size: number
 }
 
-export interface SimplifiedDocument {
+export interface DocumentTextProxy {
   uri: vscode.Uri
-  file?: Buffer
+  file: string | Buffer
+  fileName: string
   getText(): string
-}
-
-export interface WorkspaceFolderConfiguration {
-  folder: vscode.WorkspaceFolder
-  configuration: Configuration
 }
 
