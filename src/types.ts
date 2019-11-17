@@ -42,10 +42,18 @@ export interface Authentication {
 export interface OutgoingItem {
   path: string
   content: string
+  encoding: {
+    in: {
+      [ext: string]: string
+    }
+    out: {
+      [ext: string]: string
+    }
+  }
 }
 
 export type GroupedOutgoingItems = Object & {
-  [key: string]: {
+  [project: string]: {
     items: [OutgoingItem],
     workspaceFolder: vscode.WorkspaceFolder
   }
@@ -58,12 +66,17 @@ export interface ItemError {
   origin?: ItemError
 }
 
-export interface IncomingItem {
+export interface ItemDetail {
   name: string
-  content: string[]
   last_change: string
   path: string
   file_name: string
+}
+
+export interface IncomingItem extends ItemDetail {
+  name: string
+  content: string[]
+  encoding?: string
   binary?: boolean
 }
 
@@ -129,6 +142,15 @@ export interface DocumentTextProxy {
   uri: vscode.Uri
   file: string | Buffer
   fileName: string
+  binary?: boolean
   getText(): string
+}
+
+export interface WriteOperationReport {
+  success: string[]
+  failure: {
+    header: string
+    items: IncomingItemFailure[] & { last_change: string }
+  }
 }
 

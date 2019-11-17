@@ -6,7 +6,7 @@ import * as commands from './commands'
 import { API } from './api'
 import { getWorkspaceConfiguration, getWorkspaceFolderByName } from './shared/workspace'
 import { Configuration } from './types'
-import { ProjectExplorerProvider } from './explorer/projectExplorer'
+import { ProjectExplorerProvider } from './explorer'
 import { XRFDocumentProvider, XRF_SCHEME } from './xrf'
 import { HealthCheck } from './healthCheck'
 import { DocumentLocker } from './shared/locker'
@@ -25,6 +25,7 @@ export class Core {
   private _onDidChangeConfiguration: vscode.Disposable = events.onDidChangeConfiguration.listen(this)
   private _internalDisposables: vscode.Disposable[] = []
   private _disposables: vscode.Disposable[] = []
+  private _coldBoot: boolean = true
 
   constructor () {
     this.api = new API(this.configuration, output)
@@ -63,9 +64,22 @@ export class Core {
     ]
   }
 
-  init () {
+  private async _describeVersion () {
+    if (!this._coldBoot) return
+
+    const version = await this.api.version()
+
+    this.output.display(`API version: ${version}.`, 'WORKSPACE')
+    this.output.display(`Extension version: ${require('../package.json').version}.`, 'WORKSPACE')
+
+    this._coldBoot = false
+  }
+
+  async init () {
     this.configuration = getWorkspaceConfiguration()
     this.projectExplorerProvider.refresh()
+
+    await this._describeVersion()
 
     if (!this.configuration || !this.configuration.enabled) {
       this.disable()
@@ -104,7 +118,7 @@ export class Core {
 
   registerCommands () {
     this._disposables.push(commands.deleteProject.register(this))
-    this._disposables.push(commands.pickItem.register(this))
+    this._disposables.push(commands.fetchItems.register(this))
     this._disposables.push(commands.fetchProject.register(this))
     this._disposables.push(commands.compileProject.register(this))
     this._disposables.push(commands.removeItem.register(this))

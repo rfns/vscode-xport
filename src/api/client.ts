@@ -1,3 +1,4 @@
+import * as vscode from 'vscode'
 import 'isomorphic-fetch'
 import to from 'await-to-js'
 
@@ -15,7 +16,6 @@ function makeRequestHeaders (method: string, headers?: object, body?: object) {
     credentials: 'same-origin',
     headers: {
       ...headers,
-      cookie: window.localStorage.session,
       'Content-Type': 'application/json; charset=utf-8'
     }
   }
@@ -35,31 +35,6 @@ function checkFalsyOk (status: number, response?: any, rawText?: string): null |
     } else {
       throw new RequestError(message, 5001)
     }
-  }
-
-  return response
-}
-
-export async function fetchJSON (url: string, data?: any): Promise<any> {
-  const response = await handleSession(url, data)
-  let rawText = await response.text()
-  let json
-
-  try {
-    json = JSON.parse(rawText)
-  } catch (err) {
-    throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText || err.message}`)
-  }
-
-  return checkFalsyOk(response.status, json, rawText)
-}
-
-export async function handleSession (url: string, data?: any): Promise<Response> {
-  const response = await fetch(url, data)
-  const setCookie = response.headers.get('set-cookie')
-
-  if (setCookie) {
-    window.localStorage.session = setCookie
   }
 
   return response
@@ -117,7 +92,7 @@ export class Client {
 
   async head (url: string): Promise<any> {
     const configuration = makeRequestHeaders('HEAD', this.headers)
-    const response = await handleSession(url, configuration)
+    const response = await this._handleAuthenticatedRequest(url, configuration)
     checkFalsyOk(response.status, new Error('Server is not available.'))
   }
 
@@ -125,7 +100,7 @@ export class Client {
     this._busy = true
 
     const [err, response]: [Error | null, any] = await to(
-      fetchJSON(url, configuration)
+      this._fetchJSON(url, configuration)
     )
 
     this._busy = false
@@ -133,6 +108,29 @@ export class Client {
     if (err) throw err
     return response
   }
+
+  private async _handleAuthenticatedRequest (url: string, data?: any): Promise<Response> {
+    const response = await fetch(url, data)
+    const setCookie = response.headers.get('set-cookie')
+
+    if (setCookie) this.headers.cookie = setCookie
+    return response
+  }
+
+
+private async _fetchJSON (url: string, data?: any): Promise<any> {
+  const response = await this._handleAuthenticatedRequest(url, data)
+  let rawText = await response.text()
+  let json
+
+  try {
+    json = JSON.parse(rawText)
+  } catch (err) {
+    throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText || err.message}`)
+  }
+
+  return checkFalsyOk(response.status, json, rawText)
+}
 
   get busy () {
     return this._busy

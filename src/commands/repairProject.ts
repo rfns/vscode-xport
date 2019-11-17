@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
-import { ProjectExplorerItem } from '../explorer/projectExplorer'
+import { ProjectExplorerItem } from '../explorer'
 import { repairProject } from '../shared/project'
 
 export function register (core: Core): vscode.Disposable {

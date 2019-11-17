@@ -1,6 +1,6 @@
 import * as removeItem from './removeItem'
 import * as deleteItem from './deleteItem'
-import * as pickItem from './pickItem'
+import * as fetchItems from './fetchItems'
 import * as fetchProject from './fetchProject'
 import * as compileProject from './compileProject'
 import * as previewDocument from './previewDocument'
@@ -21,7 +21,7 @@ export {
   deleteProject,
   removeItem,
   deleteItem,
-  pickItem,
+  fetchItems,
   fetchProject,
   compileProject,
   previewDocument,

@@ -39,7 +39,7 @@ export class XRFDocumentProvider implements vscode.TextDocumentContentProvider {
         const [err, response] = await to(
           this.core.api.preview(resource, getFileEncodingConfiguration(uri, EncodingDirection.OUTPUT))
         )
-        if (err && err.message && err.code === 5001) return err.message
+        if (err && err.message) return err.message
         if (!response) return 'Empty response.'
 
         let error = err && err.message

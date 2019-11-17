@@ -4,7 +4,7 @@ import { XRFDocumentQuickPickItem } from '../'
 
 export const CACHE_TYPES_REGEX = /(cls|inc|mvi|mvb|mac|int|bas|mac)/
 
-function getNormalizedPath (item: XRFDocumentQuickPickItem) {
+function resolveVirtualPath (item: XRFDocumentQuickPickItem) {
   let type = (item && item.label.split('.').pop() || '').toLowerCase()
   let path = ''
 
@@ -30,7 +30,7 @@ export function register(quickPicker: vscode.QuickPick<vscode.QuickPickItem>): v
   return quickPicker.onDidAccept(async () => {
     const item = quickPicker.activeItems[0]
     if (item) {
-      const path = getNormalizedPath(item)
+      const path = resolveVirtualPath(item)
       const uri = vscode.Uri.file(path).with({ scheme: XRF_SCHEME })
       const isSystemDocument = /[\\/]%/.test(path)
       await vscode.commands.executeCommand('setContext', 'isSystemDocument', isSystemDocument)

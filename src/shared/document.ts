@@ -1,12 +1,10 @@
 import * as vscode from 'vscode'
 import * as fs from 'fs-extra'
 import * as path from 'path'
-import * as os from 'os'
-import { to } from 'await-to-js'
-import { IncomingItem, FailureOverview, IncomingItemFailure, DocumentTextProxy, EncodingDirection } from '../types'
+import { isBinaryFile } from 'isbinaryfile'
 import { serializeErrors } from './error'
 import { getWorkspaceConfiguration } from './workspace'
-import { isBinaryFile } from 'isbinaryfile'
+import { IncomingItem, FailureOverview, IncomingItemFailure, DocumentTextProxy, EncodingDirection, WriteOperationReport, ItemPaths } from '../types'
 
 export const CACHE_ROUTINES = ['mac', 'bas', 'int', 'inc', 'mvi', 'bas', 'mvb', 'mvi']
 export const CACHE_FOLDERS = /[\\/]public|cls|inc|mac|int|mvi|mvb|bas[\//]/
@@ -22,14 +20,14 @@ async function safeWrite (
       ? dechunkifyBinary(item.content, 12000)
       : dechunkify(item.content)
 
-    await fs.writeFile(destination, data)
+    await fs.writeFile(destination, data, item.encoding && { encoding: item.encoding })
     return true
   } catch (err) {
     return false
   }
 }
 
-export async function getDocumentText (uri: vscode.Uri): Promise<DocumentMock> {
+export async function getDocumentTextProxy (uri: vscode.Uri): Promise<DocumentTextProxy> {
   const filePath = uri.fsPath
   const binary = await isBinaryFile(uri.fsPath)
   const encoding = !binary && getFileEncodingConfiguration(uri, EncodingDirection.INPUT) || null
@@ -49,7 +47,7 @@ export async function getDocumentText (uri: vscode.Uri): Promise<DocumentMock> {
 export async function write (
   items: IncomingItem[],
   workspaceFolderUri: vscode.Uri
-): Promise<any> {
+): Promise<WriteOperationReport> {
   let filesWritten: any = [];
   let filesNotWritten: any = [];
 
@@ -171,5 +169,12 @@ export function getFileEncodingConfiguration (uri: vscode.Uri, direction: Encodi
 
   const extension = (uri.fsPath.split('.').pop() || '').toLowerCase()
   return encodings[extension] || encodings.default
+}
+
+export function tagWithEncoding (items: ItemPaths, encoding: EncodingDirection) {
+  return items.paths.map((p: any) => ({
+    path: p.path,
+    encoding: p.binary ? 'RAW' : getFileEncodingConfiguration(vscode.Uri.file(p.path), encoding)
+  }))
 }
 

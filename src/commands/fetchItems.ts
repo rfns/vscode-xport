@@ -1,10 +1,8 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
-import { fetchSelectedItems } from '../shared/project'
-import { ProjectExplorerItem } from '../explorer/projectExplorer'
+import { fetchItem } from '../shared/project'
+import { ProjectExplorerItem } from '../explorer'
 import * as message from '../shared/message'
-import { getFileEncodingConfiguration } from '../shared/document'
-import { EncodingDirection } from '../types'
 
 async function getSourceWorkspaceFolder (item: ProjectExplorerItem) {
   let workspaceFolder: vscode.WorkspaceFolder | undefined
@@ -24,7 +22,7 @@ async function getSourceWorkspaceFolder (item: ProjectExplorerItem) {
 }
 
 export function register(core: Core): vscode.Disposable {
-  return vscode.commands.registerCommand('xport.projectExplorer.pickItems', async (item: ProjectExplorerItem) => {
+  return vscode.commands.registerCommand('xport.projectExplorer.fetchItems', async (item: ProjectExplorerItem) => {
     const workspaceFolder = await getSourceWorkspaceFolder(item)
 
     if (!workspaceFolder) {
@@ -33,12 +31,12 @@ export function register(core: Core): vscode.Disposable {
     }
 
     const destination = workspaceFolder.uri.fsPath
-    const uri = vscode.Uri.file(destination)
-    const items = [{
-      path: item.fullPath,
-      encoding: getFileEncodingConfiguration(uri, EncodingDirection.OUTPUT)
-    }]
 
-    return fetchSelectedItems({ core, destination, items })
+    vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Fetching ${item.label}.`
+    }, async () => {
+      return fetchItem({ core, destination, item })
+    })
   })
 }

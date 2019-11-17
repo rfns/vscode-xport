@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
 import { ProjectExplorerItem } from './item'
-import { Core } from '../../core'
+import { Core } from '../core'
 
 export function getTypes (element: ProjectExplorerItem, items: string[]): any {
   const types: any = items.reduce((types: any, item: any) => {

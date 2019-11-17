@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { ProjectExplorerItem } from './item'
-import { Core } from '../../core'
+import { Core } from '../core'
 import { getPathPart, getTypes, getProjects } from './util'
 
 export class ProjectExplorerProvider implements vscode.TreeDataProvider<ProjectExplorerItem> {

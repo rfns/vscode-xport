@@ -63,7 +63,8 @@ muxer.output(async (docs: any) => {
         range: 1,
         progress,
         token,
-        flags
+        flags,
+        compile: true
       })
 
       items.map(item => core.documentLocker.lock(item.path, promise))

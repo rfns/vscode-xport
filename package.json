@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.13.2",
+  "version": "0.14.0",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -167,7 +167,7 @@
         "enablement": "!busy"
       },
       {
-        "command": "xport.projectExplorer.pickItem",
+        "command": "xport.projectExplorer.fetchItems",
         "title": "XPort: Fetch this item",
         "enablement": "!busy",
         "icon": {
@@ -295,7 +295,7 @@
           "when": "false"
         },
         {
-          "command": "xport.projectExplorer.pickItem",
+          "command": "xport.projectExplorer.fetchItems",
           "when": "false"
         },
         {
@@ -356,16 +356,16 @@
       "editor/context": [
         {
           "command": "xport.commands.fetchDocument",
-          "when": "resourceScheme == xrf && workspaceFolderCount != 0 && !isSystemDocument"
+          "when": "resourceScheme == xrf && workspaceFolderCount != 0 && !isSystemDocument && projectExplorerEnabled"
         },
         {
           "command": "xport.commands.publishDocument",
-          "when": "resourceScheme != xrf && workspaceFolderCount != 0 && !isSystemDocument"
+          "when": "resourceScheme != xrf && workspaceFolderCount != 0 && !isSystemDocument && projectExplorerEnabled"
         }
       ],
       "view/item/context": [
         {
-          "command": "xport.projectExplorer.pickItem",
+          "command": "xport.projectExplorer.fetchItems",
           "when": "view == projectExplorer && viewItem == file",
           "group": "inline"
         },

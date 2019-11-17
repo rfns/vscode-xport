@@ -6,12 +6,13 @@ import { writeFile } from 'fs-extra'
 import { isBinaryFile } from 'isbinaryfile'
 
 import { Core } from '../core'
-import { serializeFailures, write, chunkify, chunkifyBinary, getFileEncodingConfiguration, isRefreshable } from './document'
+import { serializeFailures, write, chunkify, chunkifyBinary, getFileEncodingConfiguration, isRefreshable, tagWithEncoding, getCompilableDocuments } from './document'
 import { serializeErrors } from './error'
 import { ensureWorkspaceFolderExists, getWorkspaceConfiguration, getWorkspaceFolderByName } from './workspace'
-import { ProjectExplorerItem } from '../explorer/projectExplorer'
-import { OutgoingItem, GroupedOutgoingItems, DocumentTextProxy, EncodingDirection } from '../types'
+import { ProjectExplorerItem } from '../explorer'
+import { OutgoingItem, GroupedOutgoingItems, DocumentTextProxy, EncodingDirection, OperationReport, WriteOperationReport } from '../types'
 import { API } from '../api'
+import { paginate } from './pagination'
 
 export function getProjectName (uri: vscode.Uri): string {
   return uri.authority
@@ -55,40 +56,26 @@ export async function compileItems ({
   const executeCompileAction = async (progress: any, token: vscode.CancellationToken) => {
     progress.report({ message: 'Compiling published items. Please wait ...', step: 0 })
 
-    let previousRatio = 0
-    let completeRatio = 0
-    let limit = 0
-    let offset = 0
     let errors: any = []
     let currentBatch = 0
 
     const paths = items.map((item: vscode.Uri) => item.toString())
-    const calculatedRange = paths.length > range ? range : paths.length
-    const batchCount = Math.round(paths.length / calculatedRange)
 
-    while (limit < paths.length) {
-      if (token.isCancellationRequested) return
-
-      limit = limit > paths.length || (limit + calculatedRange) > paths.length
-        ? paths.length
-        : (limit + calculatedRange)
-
-      previousRatio = completeRatio
-      completeRatio = Math.floor((100 * limit) / paths.length)
+    await paginate(paths.length, range, async ({
+      limit,
+      range,
+      offset,
+      completion,
+      step,
+      stop
+    }) => {
+      const batchCount = Math.round(paths.length / range)
+      if (token.isCancellationRequested) return stop()
 
       const selection = paths.slice(offset, limit)
-      const step = completeRatio - previousRatio
-
-      offset = offset + calculatedRange
-
       const [err, response] = await to(core.api.compileItems(project, selection))
 
-      progress.report({
-        increment: step,
-        message: `Compiling published items (${completeRatio}% complete).`
-      })
-
-      if (err) {
+      if (!response) {
         return notifyFatalError(
           core,
           err.message,
@@ -97,15 +84,23 @@ export async function compileItems ({
         )
       }
 
+      progress.report({
+        increment: step,
+        message: `Compiling published items (${completion}% complete).`
+      })
+
       if (response.log.length > 0) {
         currentBatch++
-        core.output.display(`Compiler output (batch ${currentBatch} of ${batchCount}): \n ${response.log.join('\n   ')}`, project)
+        core.output.display(
+          `Compiler output (batch ${currentBatch} of ${batchCount}): \n ${response.log.join('\n   ')}`,
+          project
+        )
       }
 
       if (response.error || (response.errors && response.errors.length)) {
         errors = [...errors, ...response.errors]
       }
-    }
+    })
 
     if (errors.length) {
       message.displayError(core.output, 'Some items were not compiled due to errors.', project)
@@ -115,12 +110,11 @@ export async function compileItems ({
     }
   }
 
-
   if (progress && token) {
     return executeCompileAction(progress, token)
   }
 
-  return progress.withProgress({
+  return vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     cancellable: true
   }, executeCompileAction)
@@ -171,59 +165,63 @@ export async function fetchWholeProject ({
   }, async (progress: any, token: vscode.CancellationToken) => {
     if (token.isCancellationRequested) return
 
-    progress.report({ messsage: `Preparing to fetch sources from ${name} ...` })
-
     const workspaceFolderPath = path.resolve(destination, name)
     const workspaceFolder = await ensureWorkspaceFolderExists(workspaceFolderPath)
 
     if (workspaceFolder) {
-      progress.report({ message: 'Counting items ...' })
-      const [, result] = await to(core.api.count(workspaceFolder))
-      let more = true
+      progress.report({ message: `Listing ${name} items to fetch ...`})
+      const [err, result] = await to(core.api.paths(name))
+
+      if (!result)  {
+        return notifyFatalError(core, name, err, 'A fatal error happened while fetching the project.')
+      }
+
+      const items = tagWithEncoding(result, EncodingDirection.OUTPUT)
 
       let pulled = 0
       let failed = 0
       let written = 0
-      let last = { index: 1 }
-      let completeRatio = 0
-      let previous = 0
 
-      while (more) {
-        previous = completeRatio
-        completeRatio = Math.floor((100 * last.index) / result.count)
-        const step = completeRatio - previous
+      await paginate(items.length, size, async ({
+        completion,
+        step,
+        stop,
+        offset,
+        limit
+      }) => {
+        if (token.isCancellationRequested) return stop()
+
+        const selection = items.slice(offset, limit)
 
         progress.report({
           increment: step,
-          message: `Fetching ${name} sources (${completeRatio}% complete).`
+          message: `Fetching ${name} sources (${completion}% complete).`
         })
 
-        const [err, sourceList] = await to(core.api.listSources(workspaceFolder, { page, size }))
+        const [err, result] = await to(
+          fetchSelectedItems({ core, destination: workspaceFolderPath, items: selection })
+        )
 
-        if (err)  {
-          return notifyFatalError(core, name, err, 'A fatal error happened while downloading the project.')
+        if (!result)  {
+          return notifyFatalError(core, name, err, 'A fatal error happened while fetching the project.')
         }
 
-        last = sourceList.success[sourceList.success.length - 1]
-        pulled += sourceList.success.length
-        page += 1
-        more = sourceList.more
+        pulled += result.success.length
+        written += result.writings.success.length
 
-        if (sourceList.has_errors) {
-          failed += sourceList.failure.items.length
-          core.output.display(serializeFailures(sourceList.failure), name)
+        if (result.has_errors) {
+          failed += result.failure.items.length
+          core.output.display(serializeFailures(result.failure), name)
         }
 
-        const writings = await write(sourceList.success, workspaceFolder.uri)
-        written += writings.success.length
-
-        if (writings.failure.items.length > 0) {
-          core.output.display(serializeFailures(writings.errors), name)
+        if (result.writings.failure.items.length > 0) {
+          failed += result.writings.failure.items.length
+          core.output.display(serializeFailures(result.writings.failure), name)
         }
-      }
+      })
 
       if (failed > 0) {
-        core.message.displayError(core.output, `Failed to fetch ${failed} items.`, name)
+        core.message.displayError(core.output, `Failed to fetch or write ${failed} items.`, name)
       }
 
       core.output.display(`Operation result: ↓ ${pulled} | ✎ ${written} | ✘ ${failed}.`, name)
@@ -231,51 +229,64 @@ export async function fetchWholeProject ({
   })
 }
 
-export async function fetchSelectedItems ({
+export async function fetchItem ({
   core,
   destination,
-  items
+  item,
+}: {
+  core: Core,
+  destination: string,
+  item: ProjectExplorerItem
+}): Promise<void> {
+
+  const path = item.fullPath
+  const [err, result] = await to(fetchSelectedItems({
+    core,
+    destination,
+    items: [{
+      path,
+      encoding: getFileEncodingConfiguration(vscode.Uri.file(path), EncodingDirection.OUTPUT)
+    }]
+  }))
+
+  if (!result)  {
+    return notifyFatalError(core, name, err, 'A fatal error happened while fetching the item.')
+  }
+
+  if (result.has_errors) {
+    core.output.display(serializeFailures(result.failure), name)
+    await message.displayError(core.output, `Failed to fetch ${result.success.length} items.`, name)
+  }
+
+  if (result.writings.failure.items.length > 0) {
+    core.output.display(serializeFailures(result.writings.failure), name)
+  }
+
+  core.output.display(`Operation result: ↓ ${result.success.length} | ✎ ${result.writings.success.length} | ✘ ${result.failure.items.length}.`, name)
+
+}
+
+async function fetchSelectedItems ({
+  core,
+  destination,
+  items,
 }: {
   core: Core,
   destination: string,
   items: { path: string, encoding: string }[]
-}): Promise<void> {
-  vscode.window.withProgress({
-    location: vscode.ProgressLocation.Notification
-  }, async (progress: any) => {
-    const workspaceFolder = await ensureWorkspaceFolderExists(destination)
+}): Promise<OperationReport & { writings: WriteOperationReport } | undefined> {
+  const workspaceFolder = await ensureWorkspaceFolderExists(destination)
+  if (!workspaceFolder) return
 
-    let apiResponse: any
-    let writings: any
+  const name = workspaceFolder.name
+  const [err, apiResponse] = await to(core.api.pickSources(workspaceFolder, items))
 
-    if (workspaceFolder) {
-      const name = workspaceFolder.name
+  if (err) throw err
+  if (!apiResponse) throw new Error(`Failed to fetch the items from ${name}.`)
 
-      progress.report({ message: `Pulling items from ${name}` })
-      const [err, r] = await to(core.api.pickSources(workspaceFolder, items))
+  const writings = await write(apiResponse.success, workspaceFolder.uri)
 
-      apiResponse = r
-
-      if (err) {
-        notifyFatalError(core, name, err, 'A fatal error happened while fetch some items from the project.')
-      } else if (apiResponse) {
-        if (apiResponse.has_errors) {
-          core.output.display(serializeFailures(apiResponse.failure), name)
-          await message.displayError(core.output, `Failed to fetch ${apiResponse.success.length} items.`, name)
-        }
-
-        progress.report({ message: `Writing files` })
-
-        writings = await write(apiResponse.success, workspaceFolder.uri)
-
-        if (writings.failure.items.length > 0) {
-          core.output.display(serializeFailures(writings.errors), name)
-          await message.displayError(core.output, `Failed to fetch ${writings.failure.items.length} items.`, name)
-        }
-        core.output.display(`Operation result: ↓ ${apiResponse.success.length} | ✎ ${writings.success.length} | ✘ ${apiResponse.failure.items.length}.`, name)
-      }
-    }
-  })
+  return { ...apiResponse, writings }
 }
 
 export async function publishProjectItems ({
@@ -285,7 +296,8 @@ export async function publishProjectItems ({
   range,
   progress,
   token,
-  flags
+  flags,
+  compile
 }: {
   core: Core,
   workspaceFolder: vscode.WorkspaceFolder,
@@ -293,50 +305,43 @@ export async function publishProjectItems ({
   range: number,
   progress: any,
   token: vscode.CancellationToken,
-  flags?: string
-}): Promise<void> {
+  flags?: string,
+  compile?: boolean
+}): Promise<vscode.Uri[]> {
   const { name } = workspaceFolder
 
-  range = items.length > range ? range : items.length
+  let failed: number = 0
+  let success: number = 0
+  let written: number = 0
 
-  let previousRatio = 0
-  let completeRatio = 0
-  let failed = 0
-  let success = 0
-  let written = 0
-  let limit = 0
-  let offset = 0
+  let compilables: vscode.Uri[] = []
 
-  while (limit < items.length) {
-    if (token.isCancellationRequested) return
-
-    limit = limit > items.length || (limit + range) > items.length
-      ? items.length
-      : (limit + range)
-
-    previousRatio = completeRatio
-    completeRatio = Math.floor((100 * limit) / items.length)
+  await paginate(items.length, range, async ({
+    step,
+    completion,
+    offset,
+    limit,
+    stop
+  }) => {
+    if (token.isCancellationRequested) return stop()
 
     const selection = items.slice(offset, limit)
-    const step = completeRatio - previousRatio
-
-    offset = offset + range
-
-    const [err, response] = await to(core.api.publish(workspaceFolder, selection, flags))
+    const [err, response] = await to(core.api.publish(workspaceFolder, { items: selection, flags, compile }))
 
     progress.report({
       increment: step,
-      message: `Publishing sources to ${name} (${completeRatio}% complete).`
+      message: `Publishing ${name} (${completion}% complete).`
     })
 
-    if (err) {
-      return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
-    } else if (response) {
+    if (err) return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
+
+    if (response) {
       if (response.has_errors) {
         failed += response.failure.items.length
         core.output.display(serializeFailures(response.failure), name)
       } else {
         success += response.success.length
+        compilables = [...compilables, ...response.success.map(item => vscode.Uri.file(item.path))]
       }
 
       if (response.warning) {
@@ -350,13 +355,14 @@ export async function publishProjectItems ({
         core.output.display(serializeFailures(writingResults.failure), name)
       }
     }
-  }
+  })
 
   if (failed > 0) {
     core.message.displayError(core.output, `Failed to publish ${failed} items.`, name)
   }
 
   core.output.display(`Operation result: ↑ ${success} | ✎ ${written} | ✘ ${failed}.`, name)
+  return getCompilableDocuments(compilables)
 }
 
 export function groupDocumentsByProject (
@@ -400,7 +406,7 @@ export async function getProjectXML (
 ): Promise<void> {
   const { name } = workspaceFolder
 
-  progress.report({ message: `XPort: Generating the project XML from ${name}` })
+  progress.report({ message: `Generating the project XML from ${name}` })
   let [err, response] = await to(core.api.xml(name))
 
   if (err || !response || !response.xml) {
@@ -427,10 +433,9 @@ export async function repairProject (core: Core, name: string, progress: any) {
   let [err] = await to(api.repairProject(name))
 
   if (err) {
-    err = new Error(`Failed to repair the project '${name}'.`)
     return notifyFatalError(core, name, err, 'A error while fixing the project.')
   } else {
-    core.output.display(`The project '${name}' has been repaired with success.`, name)
+    core.output.display(`The project ${name} has been repaired with success.`, name)
   }
 }
 
@@ -447,28 +452,44 @@ export async function deleteItems ({
   progress: any
   token: vscode.CancellationToken,
 }) {
-  try {
-    progress.report({ message: `Deleting ${items.length} items ...` })
-    if (token.isCancellationRequested) return
+  let deleted: number = 0
+  let failed: number = 0
 
-    const response = await core.api.delete(projectName, items)
+  await paginate(items.length, 100, async ({
+    completion,
+    offset,
+    limit,
+    stop,
+    step
+  }) => {
+    if (token.isCancellationRequested) return stop()
 
-    core.projectExplorerProvider.refresh()
+    const selection = items.slice(offset, limit)
+    const response = await core.api.delete(projectName, selection)
 
-    if (response.success.length) {
-      core.output.display(`Deleted ${response.success.length} items from the server.`, projectName)
-      await message.displayWarning(`${response.success.length} items have been deleted from the server.`, projectName)
-    }
+    progress.report({
+      message: `Deleting ${items.length} items from ${projectName} (${completion}% complete).`,
+      increment: step
+    })
+
+    deleted += response.success.length
+    failed  += response.failure.items.length
 
     if (response.has_errors) {
       core.output.display(serializeFailures(response.failure), projectName)
-      await message.displayError(core.output, response.failure.header, projectName)
     }
-  } catch (err) {
-    core.output.display('A fatal error happened while deleting items.', projectName)
-    core.output.display(`Details: ${err.message}`, projectName)
-    await message.displayError(core.output, 'Failed to complete the operation.', projectName)
+  })
+
+  if (failed > 0) {
+    await message.displayError(core.output, 'Failed to delete one or more items.', projectName)
   }
+
+  if (deleted > 0) {
+    message.displayWarning(`${deleted} items have been deleted from the server.`, projectName)
+  }
+
+  core.output.display(`Operation result: ✓ ${deleted} | ✘ ${failed}.`, projectName)
+  core.projectExplorerProvider.refresh()
 }
 
 export async function removeItems ({
@@ -484,27 +505,43 @@ export async function removeItems ({
   progress: any
   token: vscode.CancellationToken,
 }) {
-  try {
-    progress.report({ message: `Removing ${items.length} items from ${projectName} ...` })
-    if (token.isCancellationRequested) return
+  let removed: number = 0
+  let failed: number = 0
 
-    const response = await core.api.delete(projectName, items)
+  await paginate(items.length, 100, async ({
+    completion,
+    offset,
+    limit,
+    stop,
+    step
+  }) => {
+    if (token.isCancellationRequested) return stop()
 
-    core.projectExplorerProvider.refresh()
+    const selection = items.slice(offset, limit)
+    const response = await core.api.delete(projectName, selection)
 
-    if (response.success.length) {
-      core.output.display(`Removed ${response.success.length} items from the server.`, projectName)
-      await message.displayWarning(`${response.success.length} items have been removed from ${projectName}.`, projectName)
-    }
+    progress.report({
+      message: `Removing ${items.length} items from ${projectName} (${completion}% complete).`,
+      increment: step
+    })
+
+    removed += response.success.length
+    failed  += response.failure.items.length
 
     if (response.has_errors) {
       core.output.display(serializeFailures(response.failure), projectName)
-      await message.displayError(core.output, response.failure.header, projectName)
     }
-  } catch (err) {
-    core.output.display('A fatal error happened while removing items.', projectName)
-    core.output.display(`Details: ${err.message}`, projectName)
-    await message.displayError(core.output, 'Failed to complete the operation.', projectName)
+  })
+
+  if (failed > 0) {
+    await message.displayError(core.output, 'Failed to delete one or more items.', projectName)
   }
+
+  if (removed > 0) {
+    message.displayWarning(`${removed} items have been removed from the server.`, projectName)
+  }
+
+  core.output.display(`Operation result: ✓ ${removed} | ✘ ${failed}.`, projectName)
+  core.projectExplorerProvider.refresh()
 }
 

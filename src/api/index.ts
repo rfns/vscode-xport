@@ -122,14 +122,13 @@ export class API {
 
   async publish (
     workspaceFolder: vscode.WorkspaceFolder,
-    items: OutgoingItem[],
-    flags?: string
+    payload: { items: OutgoingItem[], flags?: string, compile?: boolean }
   ): Promise<OperationReport> {
     const { name } = workspaceFolder
     if (!this.client) return { has_errors: false, success: [], failure: { header: '', items: [] }}
 
     const resource = `${this.getProjectBaseResource(name)}/items/publish`
-    return this.client.post(resource, { items, flags })
+    return this.client.post(resource, payload)
   }
 
   async deleteProject (name: string): Promise<boolean> {
@@ -179,7 +178,15 @@ export class API {
     if (!this.client) return
 
     const resource = `${this.getProjectBaseResource(name)}/repair`
-    this.client.patch(resource)
+    return this.client.patch(resource)
+  }
+
+  async version () {
+    if (!this.client) return
+
+    const resource = `${this.host}/xport/api/info`
+    const { version } = await this.client.get(resource)
+    return version
   }
 
   getProjectBaseResource (name: string): string {

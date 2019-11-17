@@ -4,7 +4,7 @@ const path = require('path')
 const CopyPlugin = require('copy-webpack-plugin')
 const CleanPlugin = require('clean-webpack-plugin')
 
-/**@type {import('webpack').Configuration}*/
+/** @type {import('webpack').Configuration} */
 const config = {
   target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
   entry: './src/extension.ts', // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/

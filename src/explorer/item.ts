@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
-import { XRF_SCHEME } from '../../xrf'
-import { FileTypes } from '../../types'
+import { XRF_SCHEME } from '../xrf'
+import { FileTypes } from '../types'
 
 export class ProjectExplorerItem extends vscode.TreeItem {
   public readonly project: string
