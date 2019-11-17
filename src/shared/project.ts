@@ -330,7 +330,7 @@ export async function publishProjectItems ({
 
     progress.report({
       increment: step,
-      message: `Publishing ${name} (${completion}% complete).`
+      message: `Publishing to ${name} (${completion}% complete).`
     })
 
     if (err) return notifyFatalError(core, name, err, 'A fatal error happened while publishing changes.')
