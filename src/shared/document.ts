@@ -20,7 +20,8 @@ async function safeWrite (
       ? dechunkifyBinary(item.content, 12000)
       : dechunkify(item.content)
 
-    await fs.writeFile(destination, data, item.encoding && { encoding: item.encoding })
+    const encoding = item.encoding && item.encoding !== 'RAW' ? { encoding: item.encoding } : undefined
+    await fs.writeFile(destination, data, encoding)
     return true
   } catch (err) {
     return false
