@@ -150,13 +150,11 @@ export async function fetchWholeProject ({
   core,
   name,
   destination,
-  page = 1,
   size = 20
 }: {
-  core: Core,
-  name: string,
-  destination: string,
-  page?: number
+  core: Core
+  name: string
+  destination: string
   size?: number
 }) {
   vscode.window.withProgress({
@@ -177,6 +175,7 @@ export async function fetchWholeProject ({
       }
 
       const items = tagWithEncoding(result, EncodingDirection.OUTPUT)
+        .map(it => ({ ...it, refresh: true }))
 
       let pulled = 0
       let failed = 0

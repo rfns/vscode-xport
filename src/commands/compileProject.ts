@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
-import { ProjectExplorerItem } from '../explorer/projectExplorer'
+import { ProjectExplorerItem } from '../explorer'
 import { compileItems } from '../shared/project'
 import { getCompilableDocuments } from '../shared/document'
 

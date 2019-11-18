@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
 import { getProjectName, fetchWholeProject } from '../shared/project'
-import { ProjectExplorerItem } from '../explorer/projectExplorer'
+import { ProjectExplorerItem } from '../explorer'
 import { getWorkspaceFolderByName } from '../shared/workspace'
 
 async function getDownloadDestination (name: string): Promise<string | undefined> {

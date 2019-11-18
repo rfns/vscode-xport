@@ -137,7 +137,7 @@ abstract class AbstractMuxer implements MuxerOptions {
 export class MuxerTimeout extends AbstractMuxer implements MuxerTimeoutStrategyOptions {
   public readonly timeout: number = 500
 
-  private timeoutId?: NodeJS.Timeout
+  private timeoutId: any
 
   constructor (options: MuxerTimeoutStrategyOptions) {
     super(options)
@@ -146,7 +146,6 @@ export class MuxerTimeout extends AbstractMuxer implements MuxerTimeoutStrategyO
 
   reset () {
     clearTimeout(this.timeout)
-    this.timeoutId = undefined
   }
 
   mux () {

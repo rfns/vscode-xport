@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { ProjectExplorerItem } from '../explorer/projectExplorer'
+import { ProjectExplorerItem } from '../explorer'
 import { Core } from '../core'
 import * as message from '../shared/message'
 
