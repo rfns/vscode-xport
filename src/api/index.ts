@@ -21,6 +21,8 @@ export class API {
   private client: Client | null
   private output: any
   private flags: string = 'cku'
+  private xmlFlags: string = ''
+  private xmlEncoding: string = ''
 
   constructor (
     options: Configuration,
@@ -35,8 +37,10 @@ export class API {
   setup (options = getWorkspaceConfiguration()) {
     if (!options) return
 
-    this.host = options.host
-    this.flags = options.flags
+    this.host = options.host || this.host
+    this.flags = options.flags || this.flags
+    this.xmlFlags = options.xmlFlags || this.xmlFlags
+    this.xmlEncoding = options.xmlEncoding || this.xmlEncoding
     this.namespace = options.namespace || this.namespace
 
     if (this.host && this.namespace) {
@@ -105,6 +109,15 @@ export class API {
     return this.client.get(resource)
   }
 
+  async list (pattern: string = '', projectList: string) {
+    if (!this.client) {
+      return { paths: [] }
+    }
+
+    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/list?projects=${projectList}&pattern=${pattern}`
+    return this.client.get(resource)
+  }
+
   async count (workspaceFolder: vscode.WorkspaceFolder) {
     const { name } = workspaceFolder
     if (!this.client) return 0
@@ -139,7 +152,7 @@ export class API {
     return true
   }
 
-  async documents (pattern: string): Promise<any> {
+  async find (pattern: string): Promise<any> {
     if (!this.client) return { matches: [] }
 
     const resource = `${this.host}/xport/api/namespaces/${this.namespace}/documents/find?pattern=${pattern}`
@@ -167,11 +180,18 @@ export class API {
     return this.client.post(resource, { flags: this.flags, items })
   }
 
-  async xml (name: string): Promise<ProjectXML> {
+  async exportXML (items: string[] = []): Promise<ProjectXML> {
     if (!this.client) return { xml: '' }
 
-    const resource = `${this.getProjectBaseResource(name)}/xml`
-    return this.client.get(resource)
+    const resource = `${this.host}/xport/api/namespaces/${this.namespace}/tasks/xml/export`
+    return this.client.post(resource, { items, encoding: this.xmlEncoding })
+  }
+
+  async importXML (name: string, items: string[] = []): Promise<ProjectXML> {
+    if (!this.client) return { xml: '' }
+
+    const resource = `${this.getProjectBaseResource(name)}/items/xml/import`
+    return this.client.post(resource, {  items, encoding: this.xmlEncoding })
   }
 
   async repairProject (name: string): Promise<void> {
