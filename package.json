@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/rfns/vscode-xport.git"
   },
-  "version": "0.14.2",
+  "version": "0.15.0",
   "engines": {
     "vscode": "^1.31.0"
   },
@@ -45,6 +45,7 @@
         "xport.transport.encoding": {
           "description": "A hash of extensions and its strategies to handle the input/output encoding:",
           "type": "object",
+          "scope": "resource",
           "default": {
             "input": {
               "default": "utf-8"
@@ -61,6 +62,7 @@
         },
         "xport.remote.namespace": {
           "type": "string",
+          "scope": "resource",
           "description": "The namespace that contains the source code:",
           "default": "USER"
         },
@@ -82,29 +84,31 @@
         "xport.compiler.flags": {
           "type": "string",
           "default": "cku",
+          "scope": "resource",
           "description": "The compiler flags to be used when compiling routines:"
         },
-        "xport.project.autoExportXML": {
-          "type": "boolean",
-          "default": false,
-          "description": "Configure the condition to generate a project XML (useful for older Caché versions):",
-          "enum": [
-            true,
-            false
-          ],
-          "enumDescriptions": [
-            "Whenever a related file is published.",
-            "Don't export the XML at all."
-          ]
+        "xport.xml.encoding": {
+          "type": "string",
+          "scope": "resource",
+          "description": "which charset should be used when exporting/import a project-based XML file.",
+          "default": "utf-8"
+        },
+        "xport.xml.flags": {
+          "type": "string",
+          "scope": "resource",
+          "description": "Which flags should be used when exporting/import a project-based XML file.",
+          "default": ""
         },
         "xport.project.watchFolders": {
           "type": "string",
           "default": "cls,mac,int,inc,public",
+          "scope": "resource",
           "description": "Select which folders XPort should watch for changes"
         },
         "xport.project.sourceRoot": {
           "type": "string",
           "default": "",
+          "scope": "resource",
           "description": "The folder name inside the workspace folder where the sources should be exported"
         },
         "xport.healthCheck.interval": {
@@ -139,6 +143,11 @@
       {
         "command": "xport.commands.findDocuments",
         "title": "XPort: Find documents",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.openXMLExportSelector",
+        "title": "XPort: Select items to export to XML",
         "enablement": "!busy"
       },
       {
@@ -273,6 +282,10 @@
         {
           "command": "xport.commands.enableExtension",
           "when": "!projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.openXMLExportSelector",
+          "when": "projectExplorerEnabled && !busy"
         },
         {
           "command": "xport.commands.findDocuments",
@@ -465,6 +478,8 @@
     "@types/fetch-mock": "^7.2.3",
     "@types/fs-extra": "^5.0.5",
     "@types/lodash.debounce": "^4.0.6",
+    "@types/lodash.merge": "^4.6.6",
+    "@types/lodash.omit": "^4.5.6",
     "@types/log-update": "^2.0.0",
     "@types/mocha": "^2.2.42",
     "@types/node": "^10.12.21",
@@ -489,6 +504,8 @@
     "isbinaryfile": "^4.0.2",
     "isomorphic-fetch": "^2.2.1",
     "lodash.debounce": "^4.0.8",
+    "lodash.merge": "^4.6.2",
+    "lodash.omit": "^4.5.0",
     "log-update": "^2.3.0",
     "whatwg-fetch": "^3.0.0"
   }
