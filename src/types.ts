@@ -13,11 +13,12 @@ export interface Configuration {
   enabled: boolean
   healthCheck: string
   flags: string
-  autoExportXML: boolean
   watchFolders: string
   sourceRoot: string
   encodings: FileEncoding
   refreshables: string
+  xmlFlags: string
+  xmlEncoding: string
 }
 
 export type FileEncoding = Object & {
@@ -80,11 +81,11 @@ export interface IncomingItem extends ItemDetail {
   binary?: boolean
 }
 
-export interface IncomingItemFailure extends RequestError {
+export interface IncomingItemFailure extends ServerResponseError {
   item_name: string
 }
 
-export interface RequestError {
+export interface ServerResponseError {
   error?: ItemError
   errors?: ItemError[]
 }
