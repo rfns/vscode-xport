@@ -17,7 +17,11 @@ export default async function handleAccept({
   let selectedItems = [...quickPicker.selectedItems.map(item => item.label)]
   quickPicker.hide()
 
-  const choice = await vscode.window.showInformationMessage('Do you want to include the affected projects (PRJ items) as well?', 'Yes', 'No, keep only the items.')
+  const choice = await vscode.window.showInformationMessage(
+    'Do you want to include the selected projects (PRJ items) as well?',
+    'Yes',
+    'No, keep only the items.'
+  )
 
   if (choice === 'Yes') {
     selectedItems = [
