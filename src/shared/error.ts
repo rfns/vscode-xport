@@ -1,6 +1,6 @@
-import { RequestError } from '../types'
+import { ServerResponseError } from '../types'
 
-export function serializeErrors (request: RequestError, header: string = '')  {
+export function serializeErrors (request: ServerResponseError, header: string = '')  {
   let message = header || ''
 
   if (request.error) {
