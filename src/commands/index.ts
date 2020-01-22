@@ -16,6 +16,7 @@ import * as repairProject from './repairProject'
 import * as previewBinary from './previewBinary'
 import * as disableExtension from './disableExtension'
 import * as enableExtension from './enableExtension'
+import * as openXMLExportSelector from './openXMLExportSelector'
 
 export {
   deleteProject,
@@ -35,5 +36,6 @@ export {
   repairProject,
   previewBinary,
   disableExtension,
-  enableExtension
+  enableExtension,
+  openXMLExportSelector
 }

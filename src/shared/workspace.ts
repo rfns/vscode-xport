@@ -3,6 +3,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { to } from 'await-to-js'
 import { Configuration } from '../types'
+import merge = require('lodash.merge')
+import omit = require('lodash.omit')
 
 export function getActiveWorkspaceFolder (): vscode.WorkspaceFolder | null {
   const editor = vscode.window.activeTextEditor
@@ -33,8 +35,6 @@ function findAdequateWorkspaceFolder (): vscode.WorkspaceFolder | null {
 export function getWorkspaceConfiguration (folder?: vscode.WorkspaceFolder): Configuration {
   let configuration = vscode.workspace.getConfiguration('xport', folder && folder.uri)
 
-  if (!configuration) configuration = vscode.workspace.getConfiguration('xport')
-
   return {
     host: configuration.remote.host,
     namespace: configuration.remote.namespace,
@@ -43,11 +43,12 @@ export function getWorkspaceConfiguration (folder?: vscode.WorkspaceFolder): Con
     enabled: configuration.core.enabled,
     healthCheck: configuration.healthCheck.interval,
     flags: configuration.compiler.flags,
-    autoExportXML: configuration.project.autoExportXML,
     watchFolders: configuration.project.watchFolders,
     sourceRoot: configuration.project.sourceRoot,
     encodings: configuration.transport.encoding,
-    refreshables: configuration.transport.refetch
+    refreshables: configuration.transport.refetch,
+    xmlEncoding: configuration.xml.encoding,
+    xmlFlags: configuration.xml.flags
   }
 }
 

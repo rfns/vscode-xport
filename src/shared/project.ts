@@ -398,28 +398,6 @@ export function groupDocumentsByProject (
   }, Promise.resolve({}))
 }
 
-export async function getProjectXML (
-  core: Core,
-  workspaceFolder: vscode.WorkspaceFolder,
-  progress: vscode.Progress<any>
-): Promise<void> {
-  const { name } = workspaceFolder
-
-  progress.report({ message: `Generating the project XML from ${name}` })
-  let [err, response] = await to(core.api.xml(name))
-
-  if (err || !response || !response.xml) {
-    if (!err) err = new Error('Failed to fetch the content.')
-    return notifyFatalError(core, name, err, 'A error happened while pulling the project XML.')
-  }
-
-  const basingPath = workspaceFolder.uri.fsPath
-  const targetPath = path.resolve(basingPath, `${name}.xml`)
-
-  const [writeErr] = await to(writeFile(targetPath, response.xml))
-  if (writeErr) return notifyFatalError(core, name, writeErr, 'A error happened while writing the XML file.')
-}
-
 export async function repairProject (core: Core, name: string, progress: any) {
   const workspaceFolder = getWorkspaceFolderByName(name)
   if (!workspaceFolder) return
