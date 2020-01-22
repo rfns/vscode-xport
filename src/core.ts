@@ -4,12 +4,14 @@ import * as message from './shared/message'
 import * as events from './events'
 import * as commands from './commands'
 import { API } from './api'
-import { getWorkspaceConfiguration, getWorkspaceFolderByName } from './shared/workspace'
+import { getWorkspaceConfiguration } from './shared/workspace'
 import { Configuration } from './types'
 import { ProjectExplorerProvider } from './explorer'
 import { XRFDocumentProvider, XRF_SCHEME } from './xrf'
 import { HealthCheck } from './healthCheck'
 import { DocumentLocker } from './shared/locker'
+import finder from './xrf/finder'
+import xmlExporter from './quickpickers/xmlExporter'
 
 export class Core {
   public readonly api: API
@@ -18,6 +20,9 @@ export class Core {
   public readonly projectExplorerProvider: ProjectExplorerProvider = new ProjectExplorerProvider(this)
   public readonly xrfDocumentProvider: XRFDocumentProvider = new XRFDocumentProvider(this)
   public readonly documentLocker = new DocumentLocker()
+  public readonly finder = finder.build(this)
+  public readonly exporter = xmlExporter.build(this)
+  public workspaceFolder?: vscode.WorkspaceFolder
 
   public configuration: Configuration = getWorkspaceConfiguration()
 
@@ -35,6 +40,13 @@ export class Core {
     this.message = message
 
     this._registerInternalDiposables()
+  }
+
+  isSameWorkspace (workspaceFolder: vscode.WorkspaceFolder) {
+    const same = this.workspaceFolder === workspaceFolder
+
+    if (!same) this.workspaceFolder = workspaceFolder
+    return same
   }
 
   dispose () {
@@ -75,8 +87,21 @@ export class Core {
     this._coldBoot = false
   }
 
+  async refresh (workspaceFolder: vscode.WorkspaceFolder) {
+    if (this.isSameWorkspace(workspaceFolder)) false
+
+    this.output.display(`Detected folder based configuration, some workspace configurations will be overwritten.`, workspaceFolder.name)
+    this.configuration = getWorkspaceConfiguration(workspaceFolder)
+    this.api.setup(this.configuration)
+    this.projectExplorerProvider.refresh()
+  }
+
   async init () {
-    this.configuration = getWorkspaceConfiguration()
+    const uri = vscode.window.activeTextEditor &&  vscode.window.activeTextEditor.document.uri
+    const workspaceFolder = uri && vscode.workspace.getWorkspaceFolder(uri)
+
+    this.workspaceFolder = workspaceFolder
+    this.configuration = getWorkspaceConfiguration(workspaceFolder)
     this.projectExplorerProvider.refresh()
 
     await this._describeVersion()
@@ -97,7 +122,7 @@ export class Core {
 
       if (this._disposables.length === 0) {
         this.registerProviders()
-        this.registerListenersAndWatchers(this.configuration)
+        this.registerListenersAndWatchers()
         this.registerCommands()
       }
     }
@@ -109,11 +134,11 @@ export class Core {
     this.output.display(`Host: ${configuration.host} Namespace: ${configuration.namespace}, User: ${configuration.authentication.username}. Headers: ${headerEntries.map(([k, v]) => `${k}: ${v}`).join(', ') || 'none'}.`, 'WORKSPACE')
   }
 
-  registerListenersAndWatchers (configuration: Configuration) {
+  registerListenersAndWatchers () {
     this._disposables.push(events.onDidSaveTextDocument.listen(this))
     this._disposables.push(events.onDidChangeActiveTextEditor.listen(this))
     this._disposables.push(events.onWillSaveTextDocument.listen(this))
-    this.output.display(`Watching the following folders: ${configuration.watchFolders}.`, 'WORKSPACE')
+    this.output.display(`Watching the following folders: ${this.configuration.watchFolders}.`, 'WORKSPACE')
   }
 
   registerCommands () {
@@ -123,7 +148,7 @@ export class Core {
     this._disposables.push(commands.compileProject.register(this))
     this._disposables.push(commands.removeItem.register(this))
     this._disposables.push(commands.deleteItem.register(this))
-    this._disposables.push(commands.previewDocument.register())
+    this._disposables.push(commands.previewDocument.register(this))
     this._disposables.push(commands.compareDocumentVersions.register(this))
     this._disposables.push(commands.refreshItems.register(this))
     this._disposables.push(commands.findDocuments.register(this))
@@ -133,6 +158,7 @@ export class Core {
     this._disposables.push(commands.publishWorkspaceFolder.register(this))
     this._disposables.push(commands.repairProject.register(this))
     this._disposables.push(commands.previewBinary.register(this))
+    this._disposables.push(commands.openXMLExportSelector.register(this))
 
     this.output.display('All commands have been registered.', 'WORKSPACE')
   }
@@ -140,6 +166,8 @@ export class Core {
   registerProviders () {
     this._disposables.push(vscode.workspace.registerTextDocumentContentProvider(XRF_SCHEME, this.xrfDocumentProvider))
     this._disposables.push(vscode.window.createTreeView('projectExplorer', { treeDataProvider: this.projectExplorerProvider, showCollapseAll: true }))
+    this._disposables.push(this.exporter)
+    this._disposables.push(this.finder)
   }
 
   disable () {

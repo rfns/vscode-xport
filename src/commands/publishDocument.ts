@@ -10,27 +10,31 @@ export function register (core: Core): vscode.Disposable {
 
     const doc = activeTextEditor.document
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
+    if (!workspaceFolder) return
+
+    if (!core.isSameWorkspace(workspaceFolder)) {
+      core.refresh(workspaceFolder)
+    }
+
     const { flags } = core.configuration
 
-    if (workspaceFolder) {
-      return vscode.window.withProgress({
-        location: vscode.ProgressLocation.Window,
-        cancellable: true
-      }, async (progress: any, token: vscode.CancellationToken) => {
-        const { [workspaceFolder.name]: { items } } = await groupDocumentsByProject([doc], token)
+    return vscode.window.withProgress({
+      location: vscode.ProgressLocation.Window,
+      cancellable: true
+    }, async (progress: any, token: vscode.CancellationToken) => {
+      const { [workspaceFolder.name]: { items } } = await groupDocumentsByProject([doc], token)
 
-        await publishProjectItems({
-          core,
-          workspaceFolder,
-          items,
-          range: 1,
-          progress,
-          token,
-          flags
-        })
-
-        core.projectExplorerProvider.refresh()
+      await publishProjectItems({
+        core,
+        workspaceFolder,
+        items,
+        range: 1,
+        progress,
+        token,
+        flags
       })
-    }
+
+      core.projectExplorerProvider.refresh()
+    })
   })
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { expandPaths } from '../shared/document'
-import { getDocumentTextProxy, getCompilableDocuments } from '../shared/document'
+import { getDocumentTextProxy } from '../shared/document'
 import { Core } from '../core'
 import {
   groupDocumentsByProject,
@@ -12,6 +12,8 @@ export function register (core: Core): vscode.Disposable {
   return vscode.commands.registerCommand('xport.commands.publishFolder', async (uri: vscode.Uri) => {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)
     if (!workspaceFolder) return
+
+    core.refresh(workspaceFolder)
 
     const { name } = workspaceFolder
     let compilables: vscode.Uri[] = []

@@ -1,9 +1,8 @@
 import * as vscode from 'vscode'
 import { Core } from '../core'
 import { MuxerTimeout } from '../shared/muxer'
-import { publishProjectItems, groupDocumentsByProject, getProjectXML } from '../shared/project'
+import { publishProjectItems, groupDocumentsByProject } from '../shared/project'
 import { getWorkspaceConfiguration } from '../shared/workspace'
-import { Configuration } from '../types';
 
 const WATCHABLE_FOLDERS = /[\\/](public|cls|inc|mac|int|mvi|mvb|bas)[\\/]/
 
@@ -30,19 +29,19 @@ export const muxer = new MuxerTimeout({
 })
 
 const input = muxer.input(async (doc: vscode.TextDocument, core: Core) => {
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
+
   const { configuration } = core
 
   if (doc.fileName.match(/\.(vscode|code-workspace)/)) return
   if (!isWatching(doc.fileName)) return
   if (!configuration) throw new Error('Configuration not found.')
 
-  return { ...doc, core, configuration }
+  return { ...doc, core }
 })
 
 muxer.output(async (docs: any) => {
   let core: Core = docs[0].core
-  let configuration: Configuration = docs[0].configuration
-  const { flags } = configuration
 
   vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
@@ -56,6 +55,9 @@ muxer.output(async (docs: any) => {
 
     for (let i = 0, l = entries.length; i < l; i++) {
       const { items, workspaceFolder } = entries[i]
+      core.refresh(workspaceFolder)
+
+      const { flags } = core.configuration
       const promise = publishProjectItems({
         core,
         workspaceFolder,
@@ -71,10 +73,6 @@ muxer.output(async (docs: any) => {
 
       await promise
       core.documentLocker.unlockAll()
-
-      if (core.configuration && core.configuration.autoExportXML) {
-        await getProjectXML(core, workspaceFolder, progress)
-      }
     }
     core.projectExplorerProvider.refresh()
   })
