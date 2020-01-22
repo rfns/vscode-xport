@@ -1,5 +1,5 @@
-import { XRFDocumentProvider } from './documentProvider'
-import { XRFDocumentFinder } from './documentFinder'
+import { XRFDocumentProvider } from './provider'
+import XRFDocumentFinder from './finder'
 
 export { XRFDocumentProvider, XRFDocumentFinder }
 
