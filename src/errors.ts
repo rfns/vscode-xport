@@ -1,10 +1,26 @@
-export class RequestError extends Error {
-  public code: number
+import { ServerResponseError } from './types'
+import { serializeErrors } from './shared/error'
 
-  constructor (message: string, code: number) {
+export class RequestError extends Error {
+  public readonly response: ServerResponseError
+  public readonly status: number
+
+  constructor ({
+    message,
+    status,
+    response
+  }: {
+    message: string,
+    status: number,
+    response: ServerResponseError
+  }) {
     super(message)
     this.name = 'RequestError'
-    this.code = code
+    this.status = status
+    this.response = response
   }
 
+  serialize (): string {
+    return serializeErrors(this.response, this.message)
+  }
 }

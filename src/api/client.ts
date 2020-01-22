@@ -29,12 +29,25 @@ function checkFalsyOk (status: number, response?: any, rawText?: string): null |
   }
 
   if (status > 301) {
-    if (response && response.error.message) {
-      message = response.error.message
-      throw new RequestError(message, response.error.internal_code || 5002)
+    if (response && response.error || response.errors) {
+      message = response.error ? response.error.message : message
+      throw new RequestError({
+        message,
+        status,
+        response
+      })
     } else {
-      throw new RequestError(message, 5001)
+      throw new RequestError({
+        message,
+        status,
+        response: {
+          error: {
+            message
+          }
+        }
+      })
     }
+
   }
 
   return response
@@ -125,6 +138,7 @@ private async _fetchJSON (url: string, data?: any): Promise<any> {
 
   try {
     json = JSON.parse(rawText)
+    rawText = ''
   } catch (err) {
     throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText || err.message}`)
   }
