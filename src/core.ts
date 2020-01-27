@@ -43,10 +43,7 @@ export class Core {
   }
 
   isSameWorkspace (workspaceFolder: vscode.WorkspaceFolder) {
-    const same = this.workspaceFolder === workspaceFolder
-
-    if (!same) this.workspaceFolder = workspaceFolder
-    return same
+    return this.workspaceFolder === workspaceFolder
   }
 
   dispose () {
@@ -87,9 +84,12 @@ export class Core {
     this._coldBoot = false
   }
 
-  async refresh (workspaceFolder: vscode.WorkspaceFolder) {
-    if (this.isSameWorkspace(workspaceFolder)) false
+  refresh (workspaceFolder: vscode.WorkspaceFolder): void {
+    if (this.isSameWorkspace(workspaceFolder)) {
+      return
+    }
 
+    this.workspaceFolder = workspaceFolder
     this.output.display(`Detected folder based configuration, some workspace configurations will be overwritten.`, workspaceFolder.name)
     this.configuration = getWorkspaceConfiguration(workspaceFolder)
     this.api.setup(this.configuration)
