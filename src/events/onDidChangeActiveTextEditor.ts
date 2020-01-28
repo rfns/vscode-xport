@@ -9,7 +9,7 @@ export function listen (core: Core): vscode.Disposable {
     if (!textEditor) return
 
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(textEditor.document.uri)
-    if (workspaceFolder) core.refresh(workspaceFolder)
+    core.refresh(workspaceFolder)
 
     if (textEditor.document.uri.scheme == XRF_SCHEME) {
       debouncedRefresh(textEditor.document.uri)

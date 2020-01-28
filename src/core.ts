@@ -84,9 +84,9 @@ export class Core {
     this._coldBoot = false
   }
 
-  refresh (workspaceFolder: vscode.WorkspaceFolder): void {
-    if (this.isSameWorkspace(workspaceFolder)) {
-      return
+  refresh (workspaceFolder?: vscode.WorkspaceFolder): boolean {
+    if (!workspaceFolder || this.isSameWorkspace(workspaceFolder)) {
+      return false
     }
 
     this.workspaceFolder = workspaceFolder
@@ -94,6 +94,7 @@ export class Core {
     this.configuration = getWorkspaceConfiguration(workspaceFolder)
     this.api.setup(this.configuration)
     this.projectExplorerProvider.refresh()
+    return true
   }
 
   async init () {

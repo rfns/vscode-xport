@@ -12,9 +12,7 @@ export function register (core: Core): vscode.Disposable {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
     if (!workspaceFolder) return
 
-    if (!core.isSameWorkspace(workspaceFolder)) {
-      core.refresh(workspaceFolder)
-    }
+    core.refresh(workspaceFolder)
 
     const { flags } = core.configuration
 

@@ -6,9 +6,7 @@ export function listen (core: Core): vscode.Disposable {
     core.output.display('Refreshed context because detected changes in the current workspace settings.', 'WORKSPACE')
     const workspaceFolder = vscode.window.activeTextEditor && vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor.document.uri)
 
-    if (workspaceFolder) {
-      core.refresh(workspaceFolder)
-    } else {
+    if (!core.refresh(workspaceFolder)) {
       core.init()
     }
   })
