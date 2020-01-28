@@ -82,7 +82,23 @@ export function getPathPart (element: ProjectExplorerItem) {
             itemCommand
           )
       ]
-    }, [])
+    }, []).sort(byLocation)
+}
+
+const byLocation = (a: ProjectExplorerItem, b: ProjectExplorerItem) => {
+  const REGEXP_AGGREGATOR = /(package|folder)/
+  const aIsAggregator = a.location.match(REGEXP_AGGREGATOR)
+  const bIsAggregator = b.location.match(REGEXP_AGGREGATOR)
+  const bothAreAggregators = aIsAggregator && bIsAggregator
+
+  if (bothAreAggregators) {
+    if (a.fullPath > b.fullPath) return 1
+    if (a.fullPath < b.fullPath) return -1
+  } else {
+    if (aIsAggregator) return -1
+    if (bIsAggregator) return 1
+  }
+  return 0
 }
 
 export async function getProjects (core: Core) {
