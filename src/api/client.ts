@@ -7,6 +7,7 @@ import { RequestError } from '../errors'
 interface ClientOptions {
   headers?: object
   authentication?: Authentication
+  timeout: number
 }
 
 function makeRequestHeaders (method: string, headers?: object, body?: object) {
@@ -63,44 +64,40 @@ function createAuthorizationHeader (authentication: Authentication) {
 }
 
 export class Client {
-  public readonly headers?: any = {}
+  public headers?: any = {}
   private _busy: boolean
 
   constructor (options: ClientOptions) {
     this.headers = options.headers
     this._busy = false
 
-    if (options.authentication) {
-      this.headers = {
-        ...this.headers,
-        ...createAuthorizationHeader(options.authentication)
-      }
-    }
+    this._setRequestTimeout(options.timeout)
+    this._setAuthorizationHeader(options.authentication)
   }
 
   async get (url: string): Promise<any> {
     const configuration = makeRequestHeaders('GET', this.headers)
-    return this.setRequestInProgress(url, configuration)
+    return this._setRequestInProgress(url, configuration)
   }
 
   async post (url: string, body?: object): Promise<any> {
     const configuration = makeRequestHeaders('POST', this.headers, body)
-    return this.setRequestInProgress(url, configuration)
+    return this._setRequestInProgress(url, configuration)
   }
 
   async put (url: string, body?: object): Promise<any> {
     const configuration = makeRequestHeaders('PUT', this.headers, body)
-    return this.setRequestInProgress(url, configuration)
+    return this._setRequestInProgress(url, configuration)
   }
 
   async delete (url: string): Promise<any> {
     const configuration = makeRequestHeaders('DELETE', this.headers)
-    return this.setRequestInProgress(url, configuration)
+    return this._setRequestInProgress(url, configuration)
   }
 
   async patch (url: string): Promise<any> {
     const configuration = makeRequestHeaders('PATCH', this.headers)
-    return this.setRequestInProgress(url, configuration)
+    return this._setRequestInProgress(url, configuration)
   }
 
   async head (url: string): Promise<any> {
@@ -109,7 +106,7 @@ export class Client {
     checkFalsyOk(response.status, new Error('Server is not available.'))
   }
 
-  private async setRequestInProgress (url: string, configuration: any) {
+  private async _setRequestInProgress (url: string, configuration: any) {
     this._busy = true
 
     const [err, response]: [Error | null, any] = await to(
@@ -131,22 +128,37 @@ export class Client {
   }
 
 
-private async _fetchJSON (url: string, data?: any): Promise<any> {
-  const response = await this._handleAuthenticatedRequest(url, data)
-  let rawText = await response.text()
-  let json
+  private async _fetchJSON (url: string, data?: any): Promise<any> {
+    const response = await this._handleAuthenticatedRequest(url, data)
+    let rawText = await response.text()
+    let json
 
-  try {
-    json = JSON.parse(rawText)
-    rawText = ''
-  } catch (err) {
-    throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText || err.message}`)
+    try {
+      json = JSON.parse(rawText)
+      rawText = ''
+    } catch (err) {
+      throw new Error(`Failed to parse response from JSON because the incoming format is not valid: ${rawText || err.message}`)
+    }
+
+    return checkFalsyOk(response.status, json, rawText)
   }
-
-  return checkFalsyOk(response.status, json, rawText)
-}
 
   get busy () {
     return this._busy
+  }
+
+  private _setRequestTimeout (timeout: number) {
+    this.headers = {
+      ...this.headers,
+      'X-CSP-Gateway-Timeout': timeout
+    }
+  }
+
+  private _setAuthorizationHeader (authentication?: Authentication) {
+    if (!authentication) return
+    this.headers = {
+      ...this.headers,
+      ...createAuthorizationHeader(authentication)
+    }
   }
 }

@@ -42,6 +42,12 @@
           "description": "The address where the XPort API is hosted:",
           "default": "http://localhost:57772"
         },
+        "xport.remote.timeout": {
+          "type": "number",
+          "scope": "resource",
+          "description": "The amount of time in seconds to wait for a response from the gateway.",
+          "default": 600
+        },
         "xport.transport.encoding": {
           "description": "A hash of extensions and its strategies to handle the input/output encoding:",
           "type": "object",
@@ -58,6 +64,7 @@
         "xport.transport.refetch": {
           "description": "A list of file types that XPort should fetch back from the server after the publication:",
           "type": "string",
+          "scope": "resource",
           "default": "cls"
         },
         "xport.remote.namespace": {
@@ -85,7 +92,21 @@
           "type": "string",
           "default": "cku",
           "scope": "resource",
-          "description": "The compiler flags to be used when compiling routines:"
+          "description": "The compiler flags to be used when compiling routines"
+        },
+        "xport.compiler.strategy": {
+          "type": "number",
+          "scope": "resource",
+          "description": "The type of strategy to use when compiling multiple items at once",
+          "default": 0,
+          "enum": [
+            "Batch",
+            "Single"
+          ],
+          "enumDescriptions": [
+            "Split the item list into chunks and send them sequentially",
+            "Send a single list with all items and wait for the compilation to complete"
+          ]
         },
         "xport.xml.encoding": {
           "type": "string",

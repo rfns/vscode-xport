@@ -5,6 +5,11 @@ export const FileTypes = {
   PDF: /\.(pdf)$/i
 }
 
+export enum CompilationStrategy {
+  BATCH = 'Batch',
+  SINGLE = 'Single'
+}
+
 export interface Configuration {
   host: string
   headers?: object
@@ -19,6 +24,8 @@ export interface Configuration {
   refreshables: string
   xmlFlags: string
   xmlEncoding: string
+  strategy: CompilationStrategy
+  timeout: number
 }
 
 export type FileEncoding = Object & {

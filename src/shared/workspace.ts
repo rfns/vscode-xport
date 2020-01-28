@@ -37,6 +37,7 @@ export function getWorkspaceConfiguration (folder?: vscode.WorkspaceFolder): Con
 
   return {
     host: configuration.remote.host,
+    timeout: configuration.remote.timeout,
     namespace: configuration.remote.namespace,
     headers: configuration.headers,
     authentication: configuration.authentication,
@@ -48,7 +49,8 @@ export function getWorkspaceConfiguration (folder?: vscode.WorkspaceFolder): Con
     encodings: configuration.transport.encoding,
     refreshables: configuration.transport.refetch,
     xmlEncoding: configuration.xml.encoding,
-    xmlFlags: configuration.xml.flags
+    xmlFlags: configuration.xml.flags,
+    strategy: configuration.compiler.strategy
   }
 }
 

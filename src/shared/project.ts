@@ -2,7 +2,6 @@ import * as path from 'path'
 import * as vscode from 'vscode'
 import * as message from './message'
 import { to } from 'await-to-js'
-import { writeFile } from 'fs-extra'
 import { isBinaryFile } from 'isbinaryfile'
 
 import { Core } from '../core'
@@ -10,9 +9,17 @@ import { serializeFailures, write, chunkify, chunkifyBinary, getFileEncodingConf
 import { serializeErrors } from './error'
 import { ensureWorkspaceFolderExists, getWorkspaceConfiguration, getWorkspaceFolderByName } from './workspace'
 import { ProjectExplorerItem } from '../explorer'
-import { OutgoingItem, GroupedOutgoingItems, DocumentTextProxy, EncodingDirection, OperationReport, WriteOperationReport } from '../types'
 import { API } from '../api'
 import { paginate } from './pagination'
+import {
+  OutgoingItem,
+  GroupedOutgoingItems,
+  DocumentTextProxy,
+  EncodingDirection,
+  OperationReport,
+  WriteOperationReport,
+  CompilationStrategy
+} from '../types'
 
 export function getProjectName (uri: vscode.Uri): string {
   return uri.authority
@@ -54,26 +61,59 @@ export async function compileItems ({
   token?: vscode.CancellationToken
 }) {
   const executeCompileAction = async (progress: any, token: vscode.CancellationToken) => {
-    progress.report({ message: 'Compiling published items. Please wait ...', step: 0 })
+    const paths = items.map((item: vscode.Uri) => item.toString())
+    const defaultInitialReport = { message: 'Compiling published items. Please wait ...' }
+    const isBatch = core.configuration.strategy === CompilationStrategy.BATCH
 
     let errors: any = []
-    let currentBatch = 0
 
-    const paths = items.map((item: vscode.Uri) => item.toString())
+    if (isBatch) {
+      progress.report({ ...defaultInitialReport, step: 0 })
+      let currentBatch = 0
 
-    await paginate(paths.length, range, async ({
-      limit,
-      range,
-      offset,
-      completion,
-      step,
-      stop
-    }) => {
-      const batchCount = Math.round(paths.length / range)
-      if (token.isCancellationRequested) return stop()
+      await paginate(paths.length, range, async ({
+        limit,
+        range,
+        offset,
+        completion,
+        step,
+        stop
+      }) => {
+        const batchCount = Math.round(paths.length / range)
+        if (token.isCancellationRequested) return stop()
 
-      const selection = paths.slice(offset, limit)
-      const [err, response] = await to(core.api.compileItems(project, selection))
+        const selection = paths.slice(offset, limit)
+        const [err, response] = await to(core.api.compileItems(project, selection))
+
+        if (!response) {
+          return notifyFatalError(
+            core,
+            err.message,
+            name,
+            'A fatal error happened while compiling some items from this project.'
+          )
+        }
+
+        progress.report({
+          increment: step,
+          message: `Compiling published items (${completion}% complete).`
+        })
+
+        if (response.log.length > 0) {
+          currentBatch++
+          core.output.display(
+            `Compiler output (batch ${currentBatch} of ${batchCount}): \n ${response.log.join('\n   ')}`,
+            project
+          )
+        }
+
+        if (response.error || (response.errors && response.errors.length)) {
+          errors = [...errors, ...response.errors]
+        }
+      })
+    } else {
+      progress.report(defaultInitialReport)
+      const [err, response] = await to(core.api.compileItems(project, paths))
 
       if (!response) {
         return notifyFatalError(
@@ -84,23 +124,10 @@ export async function compileItems ({
         )
       }
 
-      progress.report({
-        increment: step,
-        message: `Compiling published items (${completion}% complete).`
-      })
-
-      if (response.log.length > 0) {
-        currentBatch++
-        core.output.display(
-          `Compiler output (batch ${currentBatch} of ${batchCount}): \n ${response.log.join('\n   ')}`,
-          project
-        )
-      }
-
       if (response.error || (response.errors && response.errors.length)) {
         errors = [...errors, ...response.errors]
       }
-    })
+    }
 
     if (errors.length) {
       message.displayError(core.output, 'Some items were not compiled due to errors.', project)

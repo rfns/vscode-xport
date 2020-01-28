@@ -23,6 +23,7 @@ export class API {
   private flags: string = 'cku'
   private xmlFlags: string = ''
   private xmlEncoding: string = ''
+  private timeout: number = 600
 
   constructor (
     options: Configuration,
@@ -38,6 +39,7 @@ export class API {
     if (!options) return
 
     this.host = options.host || this.host
+    this.timeout = options.timeout
     this.flags = options.flags || this.flags
     this.xmlFlags = options.xmlFlags || this.xmlFlags
     this.xmlEncoding = options.xmlEncoding || this.xmlEncoding
@@ -46,7 +48,8 @@ export class API {
     if (this.host && this.namespace) {
       this.client = new Client({
         authentication: options.authentication,
-        headers: options.headers
+        headers: options.headers,
+        timeout: options.timeout
       })
     }
   }
