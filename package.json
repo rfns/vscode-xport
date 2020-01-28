@@ -34,12 +34,12 @@
           "default": false,
           "enumDescriptions": [
             "Displays the project explorer and publish the files whenever they are modified.",
-            "Only listens to configuration changes."
+            "Listens to configuration changes."
           ]
         },
         "xport.remote.host": {
           "type": "string",
-          "description": "The address where the XPort API is hosted:",
+          "description": "The address where the XPort API is hosted",
           "default": "http://localhost:57772"
         },
         "xport.remote.timeout": {
@@ -49,7 +49,7 @@
           "default": 600
         },
         "xport.transport.encoding": {
-          "description": "A hash of extensions and its strategies to handle the input/output encoding:",
+          "description": "The encoding that should be used when importing/exporting for specified file extensions",
           "type": "object",
           "scope": "resource",
           "default": {
@@ -62,7 +62,7 @@
           }
         },
         "xport.transport.refetch": {
-          "description": "A list of file types that XPort should fetch back from the server after the publication:",
+          "description": "List of file types that XPort should fetch back from the server after saving it",
           "type": "string",
           "scope": "resource",
           "default": "cls"
@@ -70,34 +70,34 @@
         "xport.remote.namespace": {
           "type": "string",
           "scope": "resource",
-          "description": "The namespace that contains the source code:",
+          "description": "Namespace that contains the source code",
           "default": "USER"
         },
         "xport.authentication.username": {
           "type": "string",
-          "description": "The user name that should be used to authenticate. (Note: This user must have %Development function or %Developer role):",
+          "description": "Username used to authenticate. (Note: This user must have %Development function or %Developer role)",
           "default": "_system"
         },
         "xport.authentication.password": {
           "type": "string",
-          "description": "The user password that should be used to authenticate:",
+          "description": "Password used to authenticate",
           "default": "SYS"
         },
         "xport.headers": {
           "type": "object",
           "default": {},
-          "description": "Additional request headers (Note: Do NOT put the Authorization header here as it'll be overwritten by the authentication settings):"
+          "description": "Additional request headers"
         },
         "xport.compiler.flags": {
           "type": "string",
           "default": "cku",
           "scope": "resource",
-          "description": "The compiler flags to be used when compiling routines"
+          "description": "Flags to be provided to the compiler"
         },
         "xport.compiler.strategy": {
           "type": "number",
           "scope": "resource",
-          "description": "The type of strategy to use when compiling multiple items at once",
+          "description": "Strategy type to use when compiling multiple items at once",
           "default": 0,
           "enum": [
             "Batch",
@@ -105,7 +105,7 @@
           ],
           "enumDescriptions": [
             "Split the item list into chunks and send them sequentially",
-            "Send a single list with all items and wait for the compilation to complete"
+            "Send the full list and wait for the compilation to complete"
           ]
         },
         "xport.xml.encoding": {
