@@ -111,26 +111,26 @@
         "xport.xml.encoding": {
           "type": "string",
           "scope": "resource",
-          "description": "which charset should be used when exporting/import a project-based XML file.",
+          "description": "Charset to use when exporting/importing a XML file",
           "default": "utf-8"
         },
         "xport.xml.flags": {
           "type": "string",
           "scope": "resource",
-          "description": "Which flags should be used when exporting/import a project-based XML file.",
+          "description": "Flags to use when exporting/importing a XML file",
           "default": ""
         },
         "xport.project.watchFolders": {
           "type": "string",
           "default": "cls,mac,int,inc,public",
           "scope": "resource",
-          "description": "Select which folders XPort should watch for changes"
+          "description": "List of folders that should be watched for changes by XPort"
         },
         "xport.project.sourceRoot": {
           "type": "string",
           "default": "",
           "scope": "resource",
-          "description": "The folder name inside the workspace folder where the sources should be exported"
+          "description": "Project root folder that indicates where the source code is located"
         },
         "xport.healthCheck.interval": {
           "type": "string",
@@ -142,7 +142,7 @@
             "900000",
             "1200000"
           ],
-          "description": "The time in milliseconds to ping the server checking if it's online:",
+          "description": "Time in milliseconds to ping the server checking if it's online",
           "default": "Disabled",
           "enumDescriptions": [
             "Don't check if the server is available",
