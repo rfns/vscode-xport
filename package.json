@@ -1,0 +1,534 @@
+{
+  "name": "xport",
+  "publisher": "rfns",
+  "displayName": "XPort",
+  "description": "Caché project-oriented development brought to VSCode",
+  "repository": {
+    "url": "https://github.com/rfns/vscode-xport.git"
+  },
+  "version": "0.17.1-beta",
+  "engines": {
+    "vscode": "^1.31.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "type": "object",
+    "title": "XPort configuration",
+    "configuration": {
+      "type": "object",
+      "title": "XPort",
+      "properties": {
+        "xport.core.enabled": {
+          "type": "boolean",
+          "scope": "resource",
+          "enum": [
+            true,
+            false
+          ],
+          "description": "Toggle XPort API integration",
+          "default": false,
+          "enumDescriptions": [
+            "Files are saved locally but they will also be sent (published) to the instance. The project explorer will also be visible.",
+            "Files are saved locally and the project explorer will not be visible."
+          ]
+        },
+        "xport.remote.host": {
+          "type": "string",
+          "scope": "resource",
+          "description": "The address where the XPort API is hosted",
+          "default": "http://localhost:57772"
+        },
+        "xport.remote.timeout": {
+          "type": "number",
+          "scope": "resource",
+          "description": "The amount of time in seconds to wait for a response from the gateway.",
+          "default": 600
+        },
+        "xport.transport.encoding": {
+          "description": "The encoding that should be used when importing/exporting specified file extensions",
+          "type": "object",
+          "scope": "resource",
+          "default": {
+            "input": {
+              "default": "utf-8"
+            },
+            "output": {
+              "default": "utf-8"
+            }
+          }
+        },
+        "xport.transport.refetch": {
+          "description": "List of file types that XPort should fetch back from the server after saving it",
+          "type": "string",
+          "scope": "resource",
+          "default": "cls"
+        },
+        "xport.remote.namespace": {
+          "type": "string",
+          "scope": "resource",
+          "description": "Namespace that contains the source code",
+          "default": "USER"
+        },
+        "xport.authentication.username": {
+          "type": "string",
+          "scope": "resource",
+          "description": "Username used to authenticate. (Note: This user must have %Development function or %Developer role)",
+          "default": "_system"
+        },
+        "xport.authentication.password": {
+          "type": "string",
+          "scope": "resource",
+          "description": "Password used to authenticate",
+          "default": "SYS"
+        },
+        "xport.headers": {
+          "type": "object",
+          "default": {},
+          "description": "Additional request headers"
+        },
+        "xport.compiler.flags": {
+          "type": "string",
+          "default": "cku",
+          "description": "Flags to be provided to the compiler"
+        },
+        "xport.compiler.strategy": {
+          "type": "string",
+          "description": "Strategy type to use when compiling multiple items at once",
+          "default": 0,
+          "enum": [
+            "Batch",
+            "Single"
+          ],
+          "enumDescriptions": [
+            "Split the item list into chunks and send them sequentially",
+            "Send the full list and wait for the compilation to complete"
+          ]
+        },
+        "xport.xml.encoding": {
+          "type": "string",
+          "description": "Charset to use when exporting/importing a XML file",
+          "default": "utf-8"
+        },
+        "xport.xml.flags": {
+          "type": "string",
+          "description": "Flags to use when exporting/importing a XML file",
+          "default": ""
+        },
+        "xport.project.watchFolders": {
+          "type": "string",
+          "default": "cls,mac,int,inc,public",
+          "scope": "resource",
+          "description": "List of folders that should be watched for changes by XPort"
+        },
+        "xport.project.sourceRoot": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Project root folder that indicates where the source code is located"
+        },
+        "xport.healthCheck.interval": {
+          "type": "string",
+          "enum": [
+            "Disabled",
+            "60000",
+            "300000",
+            "600000",
+            "900000",
+            "1200000"
+          ],
+          "description": "Time in milliseconds to ping the server",
+          "default": "Disabled",
+          "enumDescriptions": [
+            "Don't check if the server is available",
+            "One minute",
+            "Five munutes",
+            "Ten minutes",
+            "Fifteen minutes",
+            "Twenty minutes"
+          ]
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "xport.commands.fetchDocument",
+        "title": "XPort: Fetch and add this item",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.findDocuments",
+        "title": "XPort: Find documents",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.openXMLExportSelector",
+        "title": "XPort: Select items to export to XML",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.publishWorkspaceFolder",
+        "title": "XPort: Publish workspace folder",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.publishDocument",
+        "title": "XPort: Publish this item",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.publishFolder",
+        "title": "XPort: Publish this folder",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.disableExtension",
+        "title": "XPort: Disable extension for this workspace",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.commands.enableExtension",
+        "title": "XPort: Enable extension for this workspace",
+        "enablement": "!busy"
+      },
+      {
+        "command": "xport.projectExplorer.fetchItems",
+        "title": "XPort: Fetch this item",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/arrow-down.svg",
+          "dark": "media/dark/arrow-down.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.fetchProject",
+        "title": "XPort: Fetch this project",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/desktop-download.svg",
+          "dark": "media/dark/desktop-download.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.deleteProject",
+        "title": "XPort: Delete this project from the server",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/trashcan.svg",
+          "dark": "media/dark/trashcan.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.compileProject",
+        "title": "XPort: Compile this project",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/zap.svg",
+          "dark": "media/dark/zap.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.removeItem",
+        "title": "XPort: Remove this item from this project",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/x.svg",
+          "dark": "media/dark/x.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.deleteItem",
+        "title": "XPort: Delete this item permanently",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/trashcan.svg",
+          "dark": "media/dark/trashcan.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.repairProject",
+        "title": "XPort: Repair this project",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/tools.svg",
+          "dark": "media/dark/tools.svg"
+        }
+      },
+      {
+        "command": "xport.commands.previewDocument",
+        "title": "XPort: Preview this item (plain text)",
+        "icon": {
+          "light": "media/light/search.svg",
+          "dark": "media/dark/search.svg"
+        }
+      },
+      {
+        "command": "xport.commands.previewBinary",
+        "title": "XPort: Preview this item (binary)",
+        "icon": {
+          "light": "media/light/search.svg",
+          "dark": "media/dark/search.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.compareDocumentVersions",
+        "title": "XPort: Compare with server",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/diff.svg",
+          "dark": "media/dark/diff.svg"
+        }
+      },
+      {
+        "command": "xport.projectExplorer.refreshItems",
+        "title": "XPort: Refresh the project list",
+        "enablement": "!busy",
+        "icon": {
+          "light": "media/light/sync.svg",
+          "dark": "media/dark/sync.svg"
+        }
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "xport.commands.disableExtension",
+          "when": "projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.enableExtension",
+          "when": "!projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.openXMLExportSelector",
+          "when": "projectExplorerEnabled && !busy"
+        },
+        {
+          "command": "xport.commands.findDocuments",
+          "when": "projectExplorerEnabled && !busy"
+        },
+        {
+          "command": "xport.commands.publishWorkspaceFolder",
+          "when": "projectExplorerEnabled && !busy && workspaceFolderCount != 0"
+        },
+        {
+          "command": "xport.commands.fetchDocument",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.publishDocument",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.publishFolder",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.fetchItems",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.fetchProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.compileProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.deleteItem",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.repairProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.previewDocument",
+          "when": "false"
+        },
+        {
+          "command": "xport.commands.previewBinary",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.compareDocumentVersions",
+          "when": "false"
+        },
+        {
+          "command": "xport.projectExplorer.refreshItems",
+          "when": "false"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "xport.commands.publishFolder",
+          "when": "projectExplorerEnabled && explorerResourceIsFolder"
+        },
+        {
+          "command": "xport.commands.publishDocument",
+          "when": "resourceScheme != xrf && !explorerResourceIsFolder && workspaceFolderCount != 0 && !isSystemDocument"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "xport.commands.fetchDocument",
+          "when": "resourceScheme == xrf && workspaceFolderCount != 0 && !isSystemDocument && projectExplorerEnabled"
+        },
+        {
+          "command": "xport.commands.publishDocument",
+          "when": "resourceScheme != xrf && workspaceFolderCount != 0 && !isSystemDocument && projectExplorerEnabled"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "xport.projectExplorer.fetchItems",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.fetchProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteProject",
+          "when": "view == projectExplorer && viewItem == defaultProject",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.compileProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.compileProject",
+          "when": "view == projectExplorer && viewItem == defaultProject",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.repairProject",
+          "when": "view == projectExplorer && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.repairProject",
+          "when": "view == projectExplorer && viewItem == defaultProject",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "view == projectExplorer && viewItem == package",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.removeItem",
+          "when": "view == projectExplorer && viewItem == folder",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteItem",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.deleteItem",
+          "when": "view == projectExplorer && viewItem == folder",
+          "group": "inline"
+        },
+        {
+          "command": "xport.projectExplorer.compareDocumentVersions",
+          "when": "view == projectExplorer && viewItem == file",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "group": "navigation",
+          "command": "xport.projectExplorer.refreshItems"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "projectExplorer",
+          "name": "Projects",
+          "when": "projectExplorerEnabled"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "webpack --mode none",
+    "watch": "webpack --mode none --watch",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/chai-as-promised": "^7.1.0",
+    "@types/elegant-spinner": "^1.0.0",
+    "@types/fetch-mock": "^7.2.3",
+    "@types/fs-extra": "^5.0.5",
+    "@types/lodash.debounce": "^4.0.6",
+    "@types/lodash.merge": "^4.6.6",
+    "@types/lodash.omit": "^4.5.6",
+    "@types/log-update": "^2.0.0",
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^10.12.21",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "clean-webpack-plugin": "^2.0.1",
+    "copy-webpack-plugin": "^5.1.1",
+    "fetch-mock": "^7.3.0",
+    "ts-loader": "^5.3.3",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.1",
+    "vscode": "^1.1.33",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.1"
+  },
+  "dependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/isomorphic-fetch": "0.0.35",
+    "await-to-js": "^2.1.1",
+    "elegant-spinner": "^1.0.1",
+    "fs-extra": "^7.0.1",
+    "fsevents": "^2.1.2",
+    "isbinaryfile": "^4.0.2",
+    "isomorphic-fetch": "^2.2.1",
+    "lodash.debounce": "^4.0.8",
+    "lodash.merge": "^4.6.2",
+    "lodash.omit": "^4.5.0",
+    "log-update": "^2.3.0",
+    "whatwg-fetch": "^3.0.0"
+  }
+}
