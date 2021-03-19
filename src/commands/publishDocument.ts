@@ -19,13 +19,7 @@ export function register (core: Core): vscode.Disposable {
       doc = activeTextEditor.document
     }
 
-    try {
-      workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
-      debugger
-    } catch (ex) {
-      debugger
-    }
-
+    workspaceFolder = vscode.workspace.getWorkspaceFolder(doc.uri)
     if (!workspaceFolder) return
 
     core.refresh(workspaceFolder)

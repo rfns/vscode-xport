@@ -35,14 +35,14 @@ export async function getDocumentTextProxy (uri: vscode.Uri): Promise<DocumentTe
 
   const file = await fs.promises.readFile(filePath, encoding)
   const stats = await fs.promises.stat(filePath)
-  const content = file.toString()
+  const content = binary ? file.toString('binary') : file.toString(encoding)
 
   return {
     uri,
     binary,
     fileName: filePath,
     mtime: stats.mtime,
-    getText() { return content },
+    getText() { return content }
   }
 }
 
@@ -147,7 +147,7 @@ export function getCompilableDocuments (uris: vscode.Uri[]) {
 }
 
 export function chunkifyBinary (doc: DocumentTextProxy, len: number) {
-  const buffer = Buffer.from(doc.getText())
+  const buffer = Buffer.from(doc.getText(), 'binary')
   const content = buffer.toString('base64')
 
   return chunkify(content, len)
@@ -179,17 +179,18 @@ export function isRefreshable (uri: vscode.Uri) {
 }
 
 export function getFileEncodingConfiguration (uri: vscode.Uri, direction: EncodingDirection) {
-  const configuration = getWorkspaceConfiguration()
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)
+  const configuration = getWorkspaceConfiguration(workspaceFolder)
   const encodings = configuration.encodings[direction]
 
   const extension = (uri.fsPath.split('.').pop() || '').toLowerCase()
   return encodings[extension] || encodings.default
 }
 
-export function tagWithEncoding (items: ItemPaths, encoding: EncodingDirection) {
+export function tagWithEncoding (items: ItemPaths, direction: EncodingDirection) {
   return items.paths.map((p: any) => ({
     path: p.path,
-    encoding: p.binary ? 'RAW' : getFileEncodingConfiguration(vscode.Uri.file(p.path), encoding)
+    encoding: p.binary ? 'RAW' : getFileEncodingConfiguration(vscode.Uri.file(p.path), direction)
   }))
 }
 
