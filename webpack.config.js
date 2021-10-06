@@ -45,6 +45,10 @@ const config = {
 
 if (!DEV) {
   config.plugins = [
+    new CleanPlugin()
+  ]
+} else {
+  config.plugins = [
     new CleanPlugin(),
     new CopyPlugin([{ from: 'media', to: 'media' }])
   ]
