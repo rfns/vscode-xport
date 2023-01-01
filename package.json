@@ -465,14 +465,14 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "clean-webpack-plugin": "^2.0.1",
-    "copy-webpack-plugin": "^5.0.2",
+    "copy-webpack-plugin": "^11.0.0",
     "fetch-mock": "^7.3.0",
-    "ts-loader": "^5.3.3",
+    "ts-loader": "^9.4.2",
     "tslint": "^5.12.1",
     "typescript": "^3.3.1",
     "vscode": "^1.1.33",
-    "webpack": "^4.30.0",
-    "webpack-cli": "^3.3.1"
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
   },
   "dependencies": {
     "@types/chai": "^4.1.7",
